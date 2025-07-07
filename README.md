@@ -7,4 +7,6 @@ saved.py для тестирования LLM, взятой из https://huggingf
 
 Модель TheBloke/Llama-2-7b-Chat-AWQ весит 4gb. Доля используемой памяти определяется gpu_memory_utilization
 
+Возможно потребуется установка pip install accelerate 
+
 Для запуска на fastapi следует установить pip install "fastapi[standard]" потом использовать fastapi dev main.py
