@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import re
-from vllm import LLM, SamplingParams
+#from transformers import AutoModelForCausalLM, AutoTokenizer
+#import torch
 import uvicorn
 import json
 from pathlib import Path
@@ -9,14 +10,17 @@ from pathlib import Path
 COURSES_PATH = Path(__file__).parent / "courses.json"
 with open(COURSES_PATH, encoding="utf-8") as f:
     COURSES = json.load(f)
-app = FastAPI()
 
-llm = LLM(
-    model="TheBloke/Llama-2-7b-Chat-AWQ",
-    quantization="awq",
-    gpu_memory_utilization=0.8  # или даже меньше
+"""
+# Загружаем модель (квантованную bitsandbytes)
+#tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-7B")
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-3B")
+model = AutoModelForCausalLM.from_pretrained(
+    "Qwen/Qwen2.5-3B",
+    device_map="auto",             # сам расшлёт слои по доступным GPU/CPU
+    torch_dtype=torch.float16      # половинная точность для экономии VRAM
 )
-
+"""
 class Request(BaseModel):
     user_input: str
     context: list[str] = []
@@ -45,7 +49,7 @@ def age_reply(age):
 
     # Выбираем префикс для единственного/множественного числа
     if count == 1:
-        header = "Для вашего возраста был найден подходящий курс:"
+        header = f"Для вашего возраста ({age}) был найден подходящий курс:"
     else:
         header = "Для вашего возраста были найдены подходящие курсы:"
 
@@ -74,66 +78,30 @@ def exam_reply():
 def rule_based_reply(data):
     age = data.get("age")
     if data.get("multiple"):
-        return ("Если у вас несколько детей, мы можем порекомендовать для каждого ребенка по отдельности. "
-                "Пожалуйста, напишите если вас уже заинтересовало уже конкретное направление или напишите сколько лет одному из детей")
+        return "Уточните, пожалуйста, возраст или имена каждого ребёнка."
 
     if age is not None:
         return age_reply(age)
-    """
+
     directions = data.get("directions") or []
     if directions:
         return directions_reply(directions)
-    """
+
     if data.get("exam"):
         return exam_reply()
 
     return None
 
+test_request = Request(
+    user_input="Моему сыну 6 лет",
+    context=[]
+)
 
-def get_llm_reply(user_input: str, context: list[str], max_new_tokens: int = 512) -> str:
-    # Преобразуем курсы в читаемый текст
-    course_info_block = "\n".join(
-        f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"
-        for c in COURSES
-    )
+# Разбор сообщения
+parsed_data = parse_user(test_request.user_input)
 
-    instruction = (
-        "Ты — ассистент, который помогает выбрать подходящий курс из списка ниже."
-        "Всегда отвечай только на русском языке. "
-        "Не используй английский язык ни при каких обстоятельствах."
-        "Рекомендуй только из приведённых курсов."
-        f"{course_info_block}\n\n"
-    )
+# Ответ на основе правил
+response = rule_based_reply(parsed_data)
 
-    prompt = "\n".join(
-        [instruction] + context + [f"Пользователь: {user_input}", "Бот:"]
-    )
-
-    sampling_params = SamplingParams(
-        temperature=0.3,
-        top_p=0.9,
-        max_tokens=max_new_tokens
-    )
-
-    output = llm.generate(prompt, sampling_params)
-    generated_text = output[0].outputs[0].text
-    reply = generated_text.split("Бот:")[-1] if "Бот:" in generated_text else generated_text
-    return reply.strip()
-
-
-@app.post("/generate")
-def generate(req: Request):
-    data = parse_user(req.user_input)
-    reply = rule_based_reply(data)
-    if reply:
-        return {"reply": reply}
-    # fallback на LLM
-    bot_reply = get_llm_reply(req.user_input, req.context)
-    return {"reply": bot_reply}
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
-
-
-
-
+# Вывод результата
+print(response)
