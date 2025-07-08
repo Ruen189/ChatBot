@@ -11,7 +11,7 @@
     "id": "robotics",
     "title": "Робототехника",
     "min_age": 7,
-    "max_age": 100,
+    "max_age": 18,
     "description": "На уроках робототехники в нашей школе дети осваивают базовую механику, основы электроники и программирования микропроцессоров. Обучение проходит в 5 курсов.",
     "url": "https://it-schools.org/year/course/robotics/"
   },
@@ -19,7 +19,7 @@
     "id": "informatics_basic",
     "title": "Информатика для школы",
     "min_age": 8,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Устройство компьютера, базовое программное обеспечение, основы работы с компьютером.",
     "url": "https://it-schools.org/year/course/informatics/"
   },
@@ -27,7 +27,7 @@
     "id": "theory_informatics",
     "title": "Теория информатики",
     "min_age": 10,
-    "max_age": 12,
+    "max_age": 18,
     "description": "Изучение теории по дисциплине «Информатика» и решение большого количества задач. Запись возможна только после прохождения первого курса Python или C++.",
     "url": "https://it-schools.org/year/course/theory-Informatics/",
     "prerequisites": ["programming-python", "programming-cpp"]
@@ -44,7 +44,7 @@
     "id": "programming_begin",
     "title": "Основы программирования",
     "min_age": 9,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Изучение базовых принципов алгоритмизации и развитие логического мышления. Обучение проходит в 2 курса.",
     "url": "https://it-schools.org/year/course/programming-begin/"
   },
@@ -52,7 +52,7 @@
     "id": "web",
     "title": "WEB-разработка",
     "min_age": 9,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Изучение вёрстки сайтов и сопутствующих технологий. Обучение проходит в 4 курса, есть возможность закрыть экстерном.",
     "url": "https://it-schools.org/year/course/web/"
   },
@@ -60,7 +60,7 @@
     "id": "graphics",
     "title": "Компьютерная графика",
     "min_age": 8,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Работа с разными типами графики: векторная, растровая и трёхмерная. Обучение проходит в 5 курсах.",
     "url": "https://it-schools.org/year/course/graphics/"
   },
@@ -68,7 +68,7 @@
     "id": "programming_python",
     "title": "Программирование Python",
     "min_age": 9,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Изучение языка Python: от лёгких приложений до ООП и работы с базами данных. Обучение проходит в 4 курса.",
     "url": "https://it-schools.org/year/course/programming-python/"
   },
@@ -76,7 +76,7 @@
     "id": "programming_cpp",
     "title": "Программирование C++",
     "min_age": 10,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Изучение языка C++: от простых приложений до создания мессенджеров и онлайн-игр. Обучение проходит в 4 курса.",
     "url": "https://it-schools.org/year/course/programming-cpp/"
   },
@@ -84,7 +84,7 @@
     "id": "neuron",
     "title": "Нейронные сети",
     "min_age": 14,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Изучение основ нейронных сетей и их применения. Обучение проходит в 2 курса.",
     "url": "https://it-schools.org/year/course/neuron/"
   },
@@ -92,7 +92,7 @@
     "id": "programming_processing",
     "title": "Программирование Processing",
     "min_age": 12,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Создание собственных игр с использованием инструмента Processing.",
     "url": "https://it-schools.org/year/course/programming-processing/"
   },
@@ -108,7 +108,7 @@
     "id": "programming_technology",
     "title": "Технология программирования",
     "min_age": 13,
-    "max_age": 100,
+    "max_age": 18,
     "description": "Изучение классических алгоритмов и методов решения задач. Обучение проходит в 2 курса.",
     "url": "https://it-schools.org/year/course/programming-technology/"
   }
