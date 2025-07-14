@@ -1,0 +1,5 @@
+fastapi
+vllm
+pydantic
+uvicorn
+pathlib
