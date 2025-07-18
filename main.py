@@ -15,14 +15,14 @@ llm = LLM(
     model="Qwen/Qwen3-4B-AWQ",
     quantization="awq",
     gpu_memory_utilization=0.7, # или даже меньше
-    dtype = "float16",
+    dtype = "auto",
     max_model_len=2048,
-
 )
 
 class Request(BaseModel):
     user_input: str
     context: list[str] = []
+
 
 def parse_user(msg: str):
     data = {}
@@ -93,7 +93,7 @@ def rule_based_reply(data):
     return None
 
 
-def get_llm_reply(user_input: str, context: list[str], max_new_tokens: int = 512) -> str:
+def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 512) -> str:
     # Преобразуем курсы в читаемый текст
     course_info_block = "\n".join(
         f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"
@@ -103,16 +103,14 @@ def get_llm_reply(user_input: str, context: list[str], max_new_tokens: int = 512
     instruction = (
         "Ты — ассистент, который помогает выбрать подходящий курс из списка ниже."
         "Ты отвечаешь на прямую пользователю, поэтому используй дружелюбный и вежливый тон."
-        "Всегда отвечай только на русском языке. "
-        "Не используй английский язык ни при каких обстоятельствах."
-        "Рекомендуй только из приведённых курсов."
+        "отвечай на русском языке НЕ ИСПОЛЬЗУЙ английский язык ни при каких обстоятельствах."
+        "Пример вопроса: Хочу записать ребёнка на курс по программированию, ему 10 лет. Пример ответа: вам подойдёт курс «Основы программирования» на нём изучаются основы построения алгоритмов в простейших средах разработки ссылка: https://it-schools.org/year/course/programming-begin/"
+        "Выбирай подходящие курсы из приведённых ниже, основываясь на возрасте пользователя, и направлениях, которые он укажет. Если информации недостаточно, попроси уточнить возраст или направление."
         f"{course_info_block}\n\n"
-        "ТОЧНО СЛЕДУЙ ОПИСАНИЮ КУРСОВ, НЕ ИЗМЕНЯЙ ИХ. ПЕРЕДАВАЙ ПОЛЬЗОВАТЕЛЮ ВСЮ ИНФОРМАЦИЮ ПРО ВОЗРАСТНОЙ ДИАПАЗОН, ОПИСАНИЕ КУРСА, УКАЖИ ССЫЛКУ НА КУРС."
-        
-    )
+        )
 
     prompt = "\n".join(
-        [instruction] + context + [f"Пользователь: {user_input}", "Бот:"]
+        [instruction] + context[-1:] + [f"Пользователь: {user_input}", "Бот:"]
     )
 
     sampling_params = SamplingParams(
@@ -137,7 +135,7 @@ def generate(req: Request):
     if reply:
         return {"reply": reply}
     # fallback на LLM
-    bot_reply = get_llm_reply(req.user_input, req.context, max_new_tokens=128)
+    bot_reply = get_llm_reply(req.user_input, req.context)
     return {"reply": bot_reply}
 
 if __name__ == "__main__":
