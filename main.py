@@ -12,11 +12,11 @@ with open(COURSES_PATH, encoding="utf-8") as f:
 app = FastAPI()
 
 llm = LLM(
-    model="TheBloke/Llama-2-7b-Chat-AWQ",
+    model="Qwen/Qwen3-4B-AWQ",
     quantization="awq",
     gpu_memory_utilization=0.7, # или даже меньше
     dtype = "float16",
-    max_model_len=1024,
+    max_model_len=1536,
 
 )
 
@@ -102,10 +102,13 @@ def get_llm_reply(user_input: str, context: list[str], max_new_tokens: int = 512
 
     instruction = (
         "Ты — ассистент, который помогает выбрать подходящий курс из списка ниже."
+        "Ты отвечаешь на прямую пользователю, поэтому используй дружелюбный и вежливый тон."
         "Всегда отвечай только на русском языке. "
         "Не используй английский язык ни при каких обстоятельствах."
         "Рекомендуй только из приведённых курсов."
         f"{course_info_block}\n\n"
+        "ТОЧНО СЛЕДУЙ ОПИСАНИЮ КУРСОВ, НЕ ИЗМЕНЯЙ ИХ. ПЕРЕДАВАЙ ПОЛЬЗОВАТЕЛЮ ВСЮ ИНФОРМАЦИЮ ПРО ВОЗРАСТНОЙ ДИАПАЗОН, ОПИСАНИЕ КУРСА, УКАЖИ ССЫЛКУ НА КУРС."
+        
     )
 
     prompt = "\n".join(
@@ -119,9 +122,6 @@ def get_llm_reply(user_input: str, context: list[str], max_new_tokens: int = 512
         top_k=40,
         repetition_penalty=1.1,
         n=1,
-        decoding_method="beam_search",  # ← актуальный параметр
-        num_beams=4
-        #use_beam_search=False
     )
 
     output = llm.generate(prompt, sampling_params)
