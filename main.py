@@ -16,7 +16,7 @@ llm = LLM(
     quantization="awq",
     gpu_memory_utilization=0.7, # или даже меньше
     dtype = "float16",
-    max_model_len=1536,
+    max_model_len=2048,
 
 )
 
