@@ -89,14 +89,6 @@
     "url": "https://it-schools.org/year/course/neuron/"
   },
   {
-    "id": "programming_processing",
-    "title": "Программирование Processing",
-    "min_age": 12,
-    "max_age": 18,
-    "description": "Создание собственных игр с использованием инструмента Processing.",
-    "url": "https://it-schools.org/year/course/programming-processing/"
-  },
-  {
     "id": "exam",
     "title": "Подготовка к экзаменам",
     "min_age": 15,

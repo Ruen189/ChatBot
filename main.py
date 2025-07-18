@@ -14,7 +14,10 @@ app = FastAPI()
 llm = LLM(
     model="TheBloke/Llama-2-7b-Chat-AWQ",
     quantization="awq",
-    gpu_memory_utilization=0.8  # или даже меньше
+    gpu_memory_utilization=0.7, # или даже меньше
+    dtype = "float16",
+    max_model_len=1024,
+
 )
 
 class Request(BaseModel):
@@ -112,7 +115,13 @@ def get_llm_reply(user_input: str, context: list[str], max_new_tokens: int = 512
     sampling_params = SamplingParams(
         temperature=0.3,
         top_p=0.9,
-        max_tokens=max_new_tokens
+        max_tokens=max_new_tokens,
+        top_k=40,
+        repetition_penalty=1.1,
+        n=1,
+        decoding_method="beam_search",  # ← актуальный параметр
+        num_beams=4
+        #use_beam_search=False
     )
 
     output = llm.generate(prompt, sampling_params)
@@ -128,7 +137,7 @@ def generate(req: Request):
     if reply:
         return {"reply": reply}
     # fallback на LLM
-    bot_reply = get_llm_reply(req.user_input, req.context)
+    bot_reply = get_llm_reply(req.user_input, req.context, max_new_tokens=128)
     return {"reply": bot_reply}
 
 if __name__ == "__main__":
