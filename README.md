@@ -3,7 +3,7 @@
 Файлы main.py и courses.json являются основными, а functest.py - для тестирования не LLM функций. 
 saved.py для тестирования LLM, взятой из https://huggingface.co/TheBloke/Llama-2-7B-Chat-AWQ
 
-UPD (18.07.2025): перешли на Qwen
+UPD (18.07.2025): перешли на Qwen, Проект настроен для использования с видеокартой минимум 3050 на 8GB. 
 
 Колеса для vllm на Windows не поддерживаются. Рекомендую использовать Ubuntu на WSL, либо просто на Ubuntu. 
 
