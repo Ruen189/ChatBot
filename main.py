@@ -12,17 +12,16 @@ with open(COURSES_PATH, encoding="utf-8") as f:
 app = FastAPI()
 
 llm = LLM(
-    model="Qwen/Qwen3-4B-AWQ",
+    model="cybrtooth/TheBloke-Mistral-7B-Instruct-v0.2-GGUF",
     quantization="awq",
     gpu_memory_utilization=0.7, # или даже меньше
-    dtype = "auto",
-    max_model_len=2048,
+    dtype = "float16",
+    max_model_len=3072,
 )
 
 class Request(BaseModel):
     user_input: str
     context: list[str] = []
-
 
 def parse_user(msg: str):
     data = {}
@@ -40,60 +39,7 @@ def find_courses_by_age(age: int) -> list[dict]:
         if course["min_age"] <= age <= course.get("max_age", age)
     ]
 
-def age_reply(age):
-    matching = find_courses_by_age(age)
-    count = len(matching)
-    if count == 0:
-        return "К сожалению, для данного возраста курсов не найдено."
-
-    # Выбираем префикс для единственного/множественного числа
-    if count == 1:
-        header = "Для вашего возраста был найден подходящий курс:"
-    else:
-        header = "Для вашего возраста были найдены подходящие курсы:"
-
-    # Формируем список описаний
-    lines = [header]
-    for c in matching:
-        lines.append(f"\n• {c['title']} — {c['description']} ({c['url']})")
-    return "".join(lines)
-
-def directions_reply(directions):
-    dir_ = directions[0]
-    available = [c["id"] for c in COURSES]
-    if dir_ in available:
-        title = next(c['title'] for c in COURSES if c['id'] == dir_)
-        return f"Курс «{title}» доступен для любого возраста от {next(c['min_age'] for c in COURSES if c['id'] == dir_)} лет."
-    return "К сожалению, такого направления нет. Уточните возраст или выберите одно из наших направлений."
-
-def exam_reply():
-    exam_course = next((c for c in COURSES if c['id'] == 'exam'), None)
-    if exam_course:
-        return (
-            f"Рекомендуем курс подготовки к экзаменам: {exam_course['title']} — "
-            f"{exam_course['description']} ({exam_course['url']})"
-        )
-
-def rule_based_reply(data):
-    age = data.get("age")
-    if data.get("multiple"):
-        return ("Если у вас несколько детей, мы можем порекомендовать для каждого ребенка по отдельности. "
-                "Пожалуйста, напишите если вас уже заинтересовало уже конкретное направление или напишите сколько лет одному из детей")
-
-    if age is not None:
-        return age_reply(age)
-    """
-    directions = data.get("directions") or []
-    if directions:
-        return directions_reply(directions)
-    """
-    if data.get("exam"):
-        return exam_reply()
-
-    return None
-
-
-def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 512) -> str:
+def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 1024) -> str:
     # Преобразуем курсы в читаемый текст
     course_info_block = "\n".join(
         f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"
@@ -103,9 +49,12 @@ def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 5
     instruction = (
         "Ты — ассистент, который помогает выбрать подходящий курс из списка ниже."
         "Ты отвечаешь на прямую пользователю, поэтому используй дружелюбный и вежливый тон."
-        "отвечай на русском языке НЕ ИСПОЛЬЗУЙ английский язык ни при каких обстоятельствах."
-        "Пример вопроса: Хочу записать ребёнка на курс по программированию, ему 10 лет. Пример ответа: вам подойдёт курс «Основы программирования» на нём изучаются основы построения алгоритмов в простейших средах разработки ссылка: https://it-schools.org/year/course/programming-begin/"
-        "Выбирай подходящие курсы из приведённых ниже, основываясь на возрасте пользователя, и направлениях, которые он укажет. Если информации недостаточно, попроси уточнить возраст или направление."
+        "Отвечай на русском языке НЕ ИСПОЛЬЗУЙ английский язык ни при каких обстоятельствах."
+        "Не упоминай курсы, которые не подходят по запросу пользователя. Из ответа исключи фразы вроде 'Пользователь сообщил' и 'я рекомендую курс'."
+        "Если информации недостаточно, попроси уточнить возраст или направление."
+        "Если сообщение пользователя не содержит смысла, НЕ ОТВЕЧАЙ на него и НЕ ПЫТАЙСЯ ИНТЕРПРЕТИРОВАТЬ его."
+        "Если нашёл подходящие курсы, перечисли их в ответе и указывай полную информацию с ссылками."
+        "Выбирай подходящие курсы из приведённых ниже, основываясь на возрасте пользователя, и направлениях, которые он укажет."
         f"{course_info_block}\n\n"
         )
 
@@ -117,9 +66,6 @@ def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 5
         temperature=0.3,
         top_p=0.9,
         max_tokens=max_new_tokens,
-        top_k=40,
-        repetition_penalty=1.1,
-        n=1,
     )
 
     output = llm.generate(prompt, sampling_params)
@@ -127,14 +73,8 @@ def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 5
     reply = generated_text.split("Бот:")[-1] if "Бот:" in generated_text else generated_text
     return reply.strip()
 
-
 @app.post("/generate")
 def generate(req: Request):
-    data = parse_user(req.user_input)
-    reply = rule_based_reply(data)
-    if reply:
-        return {"reply": reply}
-    # fallback на LLM
     bot_reply = get_llm_reply(req.user_input, req.context)
     return {"reply": bot_reply}
 
