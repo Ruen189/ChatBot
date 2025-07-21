@@ -1,9 +1,7 @@
 Для работы необходима версия python 3.10.18. 
 
 Файлы main.py и courses.json являются основными, а functest.py - для тестирования не LLM функций. 
-saved.py для тестирования LLM, взятой из https://huggingface.co/TheBloke/Llama-2-7B-Chat-AWQ
-
-UPD (18.07.2025): перешли на Qwen
+LLM - https://huggingface.co/cybrtooth/TheBloke-Mistral-7B-Instruct-v0.2-GGUF
 
 Колеса для vllm на Windows не поддерживаются. Рекомендую использовать Ubuntu на WSL, либо просто на Ubuntu. 
 
