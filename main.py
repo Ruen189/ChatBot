@@ -42,7 +42,7 @@ def find_courses_by_age(age: int) -> list[dict]:
 def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 1024) -> str:
     # Преобразуем курсы в читаемый текст
     course_info_block = "\n".join(
-        f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"
+        f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"  # Добавить параметр который может потребовать прохождение предидущих курсов
         for c in COURSES
     )
 
