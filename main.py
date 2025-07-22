@@ -19,33 +19,17 @@ llm = LLM(
     max_model_len=3072,
 )
 
-class Request(BaseModel):
-    user_input: str
-    context: list[str] = []
-
-def parse_user(msg: str):
-    data = {}
-    age_m = re.search(r"\b(\d{1,2})\s*(лет|года|год|годиков)\b", msg)
-    data["age"] = int(age_m.group(1)) if age_m else None
-    data["exam"] = bool(re.search(r"экзамен", msg, re.I))
-    data["directions"] = re.findall(r"направление\s+(\w+)", msg, re.I)
-    data["multiple"] = bool(re.search(r"\b(двое|трое|два|три) детей\b", msg))
-    return data
-
-def find_courses_by_age(age: int) -> list[dict]:
-    """Возвращает список курсов, подходящих по возрасту."""
-    return [
-        course for course in COURSES
-        if course["min_age"] <= age <= course.get("max_age", age)
-    ]
-
-def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 1024) -> str:
-    # Преобразуем курсы в читаемый текст
-    course_info_block = "\n".join(
+course_info_block = "\n".join(
         f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"  # Добавить параметр который может потребовать прохождение предидущих курсов
         for c in COURSES
     )
 
+class Request(BaseModel):
+    user_input: str
+    context: list[str] = []
+
+def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 1024) -> str:
+    # Преобразуем курсы в читаемый текст
     instruction = (
         "Ты — ассистент, который помогает выбрать подходящий курс из списка ниже."
         "Ты отвечаешь на прямую пользователю, поэтому используй дружелюбный и вежливый тон."
