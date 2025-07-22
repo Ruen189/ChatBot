@@ -11,15 +11,15 @@
     "id": "robotics",
     "title": "Робототехника",
     "min_age": 7,
-    "max_age": 18,
+    "max_age": 16,
     "description": "На уроках робототехники в нашей школе дети осваивают базовую механику, основы электроники и программирования микропроцессоров. Обучение проходит в 5 курсов.",
     "url": "https://it-schools.org/year/course/robotics/"
   },
   {
     "id": "informatics_basic",
     "title": "Информатика для школы",
-    "min_age": 8,
-    "max_age": 18,
+    "min_age": 7,
+    "max_age": 11,
     "description": "Устройство компьютера, базовое программное обеспечение, основы работы с компьютером.",
     "url": "https://it-schools.org/year/course/informatics/"
   },
@@ -27,7 +27,7 @@
     "id": "theory_informatics",
     "title": "Теория информатики",
     "min_age": 10,
-    "max_age": 18,
+    "max_age": 15,
     "description": "Изучение теории по дисциплине «Информатика» и решение большого количества задач. Запись возможна только после прохождения первого курса Python или C++.",
     "url": "https://it-schools.org/year/course/theory-Informatics/",
     "prerequisites": ["programming-python", "programming-cpp"]
@@ -52,7 +52,7 @@
     "id": "web",
     "title": "WEB-разработка",
     "min_age": 9,
-    "max_age": 18,
+    "max_age": 17,
     "description": "Изучение вёрстки сайтов и сопутствующих технологий. Обучение проходит в 4 курса, есть возможность закрыть экстерном.",
     "url": "https://it-schools.org/year/course/web/"
   },
@@ -60,7 +60,7 @@
     "id": "graphics",
     "title": "Компьютерная графика",
     "min_age": 8,
-    "max_age": 18,
+    "max_age": 17,
     "description": "Работа с разными типами графики: векторная, растровая и трёхмерная. Обучение проходит в 5 курсах.",
     "url": "https://it-schools.org/year/course/graphics/"
   },
