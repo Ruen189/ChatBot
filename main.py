@@ -9,6 +9,11 @@ from pathlib import Path
 COURSES_PATH = Path(__file__).parent / "courses.json"
 with open(COURSES_PATH, encoding="utf-8") as f:
     COURSES = json.load(f)
+    
+LOCATIONS_PATH = Path(__file__).parent / "locations.json"
+with open(LOCATIONS_PATH, encoding="utf-8") as f:
+    LOCATIONS = json.load(f)
+    
 app = FastAPI()
 
 llm = LLM(
@@ -16,12 +21,16 @@ llm = LLM(
     quantization="awq",
     gpu_memory_utilization=0.7, # или даже меньше
     dtype = "float16",
-    max_model_len=3072,
+    max_model_len=2048,
 )
 
 course_info_block = "\n".join(
         f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"  # Добавить параметр который может потребовать прохождение предидущих курсов
         for c in COURSES
+    )
+locations_block = "\n".join(
+        f"- {l['title']} ({l['street']}): {l['entrance']} ({l['url']})."  
+        for l in LOCATIONS
     )
 
 class Request(BaseModel):
@@ -36,11 +45,12 @@ def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 1
         "Отвечай на русском языке НЕ ИСПОЛЬЗУЙ английский язык ни при каких обстоятельствах."
         "Не упоминай курсы, которые не подходят по запросу пользователя. Из ответа исключи фразы вроде 'Пользователь сообщил' и 'я рекомендую курс'."
         "Если информации недостаточно, попроси уточнить возраст или направление."
-        "Если по возрасту подходит несколько курсов, перечисли их все."
         "Если сообщение пользователя не содержит смысла, НЕ ОТВЕЧАЙ на него и НЕ ПЫТАЙСЯ ИНТЕРПРЕТИРОВАТЬ его."
         "Если нашёл подходящие курсы, перечисли их в ответе и указывай полную информацию с ссылками."
         "Выбирай подходящие курсы из приведённых ниже, основываясь на возрасте пользователя, и направлениях, которые он укажет."
-        f"{course_info_block}\n\n"
+        f"{course_info_block}\n"
+        "ЕСЛИ пользователь назвал адрес или желает узнать ближайший филиал, передай информацию о филиале из следующих ниже."
+        f"{locations_block}\n\n"
         )
 
     prompt = "\n".join(
@@ -64,7 +74,7 @@ def generate(req: Request):
     return {"reply": bot_reply}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="192.168.0.116", reload=True)
+    uvicorn.run("main:app", host="192.168.0.116")
 
 
 
