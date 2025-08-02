@@ -6,7 +6,7 @@ model:
   max_model_len: 4096
 
 sampling:
-  temperature: 0.3
+  temperature: 0.5
   top_p: 0.9
   max_tokens: 512
 
