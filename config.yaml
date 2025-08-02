@@ -1,6 +1,6 @@
 model:
   name: "cybrtooth/TheBloke-Mistral-7B-Instruct-v0.2-GGUF"
-  quantization: "awq"
+  quantization: "awq_marlin"
   gpu_memory_utilization: 0.8
   dtype: "float16"
   max_model_len: 4096
@@ -8,7 +8,7 @@ model:
 sampling:
   temperature: 0.3
   top_p: 0.9
-  max_tokens: 2048
+  max_tokens: 512
 
 paths:
   courses: "courses.json"
