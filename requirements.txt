@@ -3,3 +3,4 @@ vllm
 pydantic
 uvicorn
 pathlib
+pyyaml

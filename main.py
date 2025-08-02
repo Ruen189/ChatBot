@@ -1,66 +1,78 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import re
 from vllm import LLM, SamplingParams
+from pathlib import Path
+from contextlib import asynccontextmanager
 import uvicorn
 import json
-from pathlib import Path
+import yaml
 
-COURSES_PATH = Path(__file__).parent / "courses.json"
+
+def load_config(path="config.yaml"):
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+config = load_config()
+
+COURSES_PATH = Path(config["paths"]["courses"])
+LOCATIONS_PATH = Path(config["paths"]["locations"])
+
 with open(COURSES_PATH, encoding="utf-8") as f:
     COURSES = json.load(f)
-    
-LOCATIONS_PATH = Path(__file__).parent / "locations.json"
+
 with open(LOCATIONS_PATH, encoding="utf-8") as f:
     LOCATIONS = json.load(f)
-    
-app = FastAPI()
 
-llm = LLM(
-    model="cybrtooth/TheBloke-Mistral-7B-Instruct-v0.2-GGUF",
-    quantization="awq",
-    gpu_memory_utilization=0.7, # или даже меньше
-    dtype = "float16",
-    max_model_len=2048,
+course_info_block ="Информация про курсы в Real-IT: "+"\n".join(
+    f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"
+    for c in COURSES
 )
 
-course_info_block = "\n".join(
-        f"- {c['title']} (от {c['min_age']} до {c['max_age']} лет): {c['description']} ({c['url']})"  # Добавить параметр который может потребовать прохождение предидущих курсов
-        for c in COURSES
+locations_block = "Информация про филиалы Real-IT только в Екатеринбурге: "+"\n".join(
+    f"- {l['title']} ({l['street']}): {l['entrance']} ({l['url']})."
+    for l in LOCATIONS
+)
+
+llm = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global llm
+    llm = LLM(
+        model=config["model"]["name"],
+        quantization=config["model"]["quantization"],
+        gpu_memory_utilization=config["model"]["gpu_memory_utilization"],
+        dtype=config["model"]["dtype"],
+        max_model_len=config["model"]["max_model_len"],
     )
-locations_block = "\n".join(
-        f"- {l['title']} ({l['street']}): {l['entrance']} ({l['url']})."  
-        for l in LOCATIONS
-    )
+    yield  # здесь приложение продолжит работу
+    # здесь можно добавить логику для shutdown, если нужно
+
+
+app = FastAPI(lifespan=lifespan)
 
 class Request(BaseModel):
     user_input: str
     context: list[str] = []
 
-def get_llm_reply(user_input: str, context: list[str]  , max_new_tokens: int = 1024) -> str:
-    # Преобразуем курсы в читаемый текст
+def get_llm_reply(user_input: str, context: list[str], max_new_tokens: int = None) -> str:
     instruction = (
-        "Ты — ассистент, который помогает выбрать подходящий курс из списка ниже."
-        "Ты отвечаешь на прямую пользователю, поэтому используй дружелюбный и вежливый тон."
-        "Отвечай на русском языке НЕ ИСПОЛЬЗУЙ английский язык ни при каких обстоятельствах."
-        "Не упоминай курсы, которые не подходят по запросу пользователя. Из ответа исключи фразы вроде 'Пользователь сообщил' и 'я рекомендую курс'."
-        "Если информации недостаточно, попроси уточнить возраст или направление."
-        "Если сообщение пользователя не содержит смысла, НЕ ОТВЕЧАЙ на него и НЕ ПЫТАЙСЯ ИНТЕРПРЕТИРОВАТЬ его."
-        "Если нашёл подходящие курсы, перечисли их в ответе и указывай полную информацию с ссылками."
-        "Выбирай подходящие курсы из приведённых ниже, основываясь на возрасте пользователя, и направлениях, которые он укажет."
-        f"{course_info_block}\n"
-        "ЕСЛИ пользователь назвал адрес или желает узнать ближайший филиал, передай информацию о филиале из следующих ниже."
-        f"{locations_block}\n\n"
-        )
+        config["instruction"]["system_prompt"]
+        + "\n"
+        + course_info_block
+        + "\n"
+        + locations_block
+        + "\n\n"
+    )
 
     prompt = "\n".join(
         [instruction] + context[-1:] + [f"Пользователь: {user_input}", "Бот:"]
     )
 
     sampling_params = SamplingParams(
-        temperature=0.3,
-        top_p=0.9,
-        max_tokens=max_new_tokens,
+        temperature=config["sampling"]["temperature"],
+        top_p=config["sampling"]["top_p"],
+        max_tokens=max_new_tokens or config["sampling"]["max_tokens"],
     )
 
     output = llm.generate(prompt, sampling_params)
@@ -74,8 +86,11 @@ def generate(req: Request):
     return {"reply": bot_reply}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="192.168.0.116")
-
-
-
-
+    uvicorn.run(
+        "main:app",
+        host=config["uvicorn"].get("host", "127.0.0.1"),
+        port=config["uvicorn"].get("port", 8000),
+        reload=config["uvicorn"].get("reload", False),
+        workers=config["uvicorn"].get("workers", 1),
+        log_level=config["uvicorn"].get("log_level", "info"),
+    )
