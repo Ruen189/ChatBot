@@ -8,8 +8,8 @@ model:
 
 sampling:
   temperature: 0.3
-  top_p: 0.6
-  max_tokens: 200
+  top_p: 0.5
+  max_tokens: 350
 
 paths:
   courses: "courses.json"
