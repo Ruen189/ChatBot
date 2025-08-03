@@ -2,7 +2,7 @@ model:
   name: "TheBloke/saiga_mistral_7b-AWQ"
   name-Backup: "cybrtooth/TheBloke-Mistral-7B-Instruct-v0.2-GGUF"
   quantization: "awq_marlin"
-  gpu_memory_utilization: 0.85
+  gpu_memory_utilization: 0.8
   dtype: "float16"
   max_model_len: 6000
 
@@ -28,6 +28,15 @@ instruction:
     ЕСЛИ пользователь НЕ СПРОСИЛ адрес филиалов или как можно к нам попасть, ТО НИ В КОЕМ СЛУЧАЕ не говори о филиалах и их местонахождении, и НЕ СПРАШИВАЙ пользователя нужно ли ему знать где филиалы. 
     ИНФОРМАЦИЮ О КУРСАХ и ФИЛИАЛАХ, указали ниже.
     
+fastapi:
+  cors:
+    allow_origins:
+      - "http://wobirservers.ru"
+      - "http://127.0.0.1:8000"
+    allow_credentials: true
+    allow_methods: ["*"]
+    allow_headers: ["*"]
+
 uvicorn:
   host: "192.168.0.116"
   port: 8000

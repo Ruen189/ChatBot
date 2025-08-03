@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from vllm import LLM, SamplingParams
 from pathlib import Path
@@ -54,6 +55,17 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+# Настройки CORS из конфига
+cors_config = config.get("fastapi", {}).get("cors", {})
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_config.get("allow_origins", []),
+    allow_credentials=cors_config.get("allow_credentials", False),
+    allow_methods=cors_config.get("allow_methods", []),
+    allow_headers=cors_config.get("allow_headers", []),
+)
 
 class Request(BaseModel):
     user_input: str
