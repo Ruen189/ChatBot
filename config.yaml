@@ -2,9 +2,9 @@ model:
   name: "TheBloke/saiga_mistral_7b-AWQ"
   name-Backup: "cybrtooth/TheBloke-Mistral-7B-Instruct-v0.2-GGUF"
   quantization: "awq_marlin"
-  gpu_memory_utilization: 0.8
+  gpu_memory_utilization: 0.85
   dtype: "float16"
-  max_model_len: 4096
+  max_model_len: 6000
 
 sampling:
   temperature: 0.5

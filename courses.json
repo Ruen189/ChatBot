@@ -34,7 +34,7 @@
   {
     "id": "sport_prog",
     "title": "Спортивное программирование",
-    "min_age": 9,
+    "min_age": 12,
     "max_age": 15,
     "description": "Основы программирования через соревновательную деятельность. Обучение проходит 3 курса.",
     "url": "https://it-schools.org/year/course/sport-prog/"
@@ -43,7 +43,7 @@
     "id": "programming_begin",
     "title": "Основы программирования",
     "min_age": 9,
-    "max_age": 17,
+    "max_age": 12,
     "description": "Изучение базовых принципов алгоритмизации и развитие логического мышления. Обучение проходит 2 курса.",
     "url": "https://it-schools.org/year/course/programming-begin/"
   },
