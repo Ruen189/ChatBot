@@ -33,6 +33,15 @@ locations_block = "Информация про филиалы Real-IT тольк
     for l in LOCATIONS
 )
 
+instruction = (
+        config["instruction"]["system_prompt"]
+        + "\n"
+        + course_info_block
+        + "\n"
+        + locations_block
+        + "\n\n"
+    )
+
 llm = None
 
 @asynccontextmanager
@@ -56,17 +65,9 @@ class Request(BaseModel):
     context: list[str] = []
 
 def get_llm_reply(user_input: str, context: list[str], max_new_tokens: int = None) -> str:
-    instruction = (
-        config["instruction"]["system_prompt"]
-        + "\n"
-        + course_info_block
-        + "\n"
-        + locations_block
-        + "\n\n"
-    )
-
+    
     prompt = "\n".join(
-        [instruction] + context[-1:] + [f"Пользователь: {user_input}", "Бот:"]
+        [instruction] + context + [f"Пользователь: {user_input}", "Бот:"]
     )
 
     sampling_params = SamplingParams(
