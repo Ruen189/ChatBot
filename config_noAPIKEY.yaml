@@ -28,7 +28,7 @@ instruction:
     ИНФОРМАЦИЮ О КУРСАХ и ФИЛИАЛАХ, указали ниже.
 
 uvicorn:
-  host: "192.168.0.116"
+  host: "0.0.0.0"      # 0.0.0.0 чтобы принимать запросы из сети
   port: 8000
   reload: False
   workers: 1
@@ -39,5 +39,4 @@ api_keys:
 
 cors:
   allow_origins:
-    - "https://example.com"
-    - "http://localhost:3000"
+    - "*"   # или список доменов, например "http://localhost", "https://yourdomain.com"
