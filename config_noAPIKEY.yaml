@@ -39,4 +39,4 @@ api_keys:
 
 cors:
   allow_origins:
-    - "*"   # или список доменов, например "http://localhost", "https://yourdomain.com"
+    - "*"   # или список доменов, например https://it-schools.org/ https://s-it-schools.org/
