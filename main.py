@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, constr, ConstrainedStr
+from pydantic import BaseModel, Field, field_validator
 from vllm import LLM, SamplingParams
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -102,12 +102,19 @@ app.add_middleware(
     allow_headers=["X-API-Key", "Content-Type"],
 )
 
-class LimitedStr(ConstrainedStr):
-    max_length = 1000
 
 class GenerateRequest(BaseModel):
-    user_input: LimitedStr
-    context: List[LimitedStr] = []
+    user_input: str = Field(..., min_length=1, max_length=1000)
+    context: List[str] = []
+
+    @field_validator("context")
+    def check_context_length(cls, v):
+        if not isinstance(v, list):
+            raise TypeError("context must be a list")
+        for s in v:
+            if len(s) > 1000:
+                raise ValueError("Each context string must be at most 1000 characters")
+        return v
 
 
 def get_llm_reply(user_input: str, context: List[str],
