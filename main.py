@@ -105,7 +105,7 @@ app.add_middleware(
 
 class GenerateRequest(BaseModel):
     user_input: str = Field(..., min_length=1, max_length=1000)
-    context: List[str] = []
+    context: List[str] = Field(default_factory=list)
 
     @field_validator("context")
     def check_context_length(cls, v):
@@ -115,6 +115,7 @@ class GenerateRequest(BaseModel):
             if len(s) > 1000:
                 raise ValueError("Each context string must be at most 1000 characters")
         return v
+
 
 
 def get_llm_reply(user_input: str, context: List[str],
