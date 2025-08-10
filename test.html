@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест API Real-IT</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        #response {
+            background: #f5f5f5;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тест API Real-IT</h1>
+    <label>API ключ:</label>
+    <input type="text" id="apiKey" placeholder="Введите API ключ">
+
+    <label>Ваш запрос:</label>
+    <textarea id="userInput" rows="4" placeholder="Например: Какой курс подойдёт для 12 лет?"></textarea>
+
+    <button onclick="sendRequest()">Отправить</button>
+
+    <h2>Ответ:</h2>
+    <div id="response">—</div>
+
+    <script>
+        async function sendRequest() {
+            const apiKey = document.getElementById("apiKey").value.trim();
+            const userInput = document.getElementById("userInput").value.trim();
+
+            if (!apiKey || !userInput) {
+                alert("Введите API ключ и запрос");
+                return;
+            }
+
+            try {
+                const res = await fetch("http://192.168.0.116:8000/generate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-API-Key": apiKey
+                    },
+                    body: JSON.stringify({
+                        user_input: userInput,
+                        context: []
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    document.getElementById("response").textContent = `Ошибка: ${err.detail}`;
+                    return;
+                }
+
+                const data = await res.json();
+                document.getElementById("response").textContent = data.reply;
+            } catch (err) {
+                document.getElementById("response").textContent = `Ошибка соединения: ${err}`;
+            }
+        }
+    </script>
+</body>
+</html>

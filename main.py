@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from vllm import LLM, SamplingParams
 from pathlib import Path
@@ -76,6 +77,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+# Разрешаем CORS для доступа с сайтов
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.get("cors", {}).get("allow_origins", ["*"]),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class GenerateRequest(BaseModel):
