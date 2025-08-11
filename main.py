@@ -1,17 +1,50 @@
 import uvicorn
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-
+import logging
+import time
 from config import config
 from security import verify_api_key
 from llm_service import lifespan, get_llm_reply
 from models import GenerateRequest
+
+
+log_cfg = config.get("logging", {})
+logging.basicConfig(
+    level=getattr(logging, log_cfg.get("level", "INFO")),
+    format=log_cfg.get("format", "%(asctime)s %(levelname)s %(message)s"),
+    filename=log_cfg.get("filename"),
+    filemode=log_cfg.get("filemode", "a"),
+)
+logger = logging.getLogger(__name__)
+
 
 app = FastAPI(lifespan=lifespan)
 
 allow_origins = config.get("cors", {}).get("allow_origins", [])
 if not allow_origins or allow_origins == ["*"]:
     allow_origins = ["*"]
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+
+    body_bytes = await request.body()
+    body_text = body_bytes.decode('utf-8') if body_bytes else "EMPTY"
+
+    response = await call_next(request)
+
+    process_time = (time.time() - start_time) * 1000
+
+    logger.info(
+        f"{request.method} {request.url.path} "
+        f"Status: {response.status_code} "
+        f"Time: {process_time:.2f}ms "
+        f"Body: {body_text}"
+    )
+
+    return response
 
 app.add_middleware(
     CORSMiddleware,

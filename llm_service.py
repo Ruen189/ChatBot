@@ -16,7 +16,6 @@ instruction = (
     build_courses_block(COURSES) + "\n" +
     build_locations_block(LOCATIONS) + "\n\n"
 )
-print(f"Instruction: {instruction}")
 llm: Optional[LLM] = None
 
 @asynccontextmanager
@@ -38,25 +37,26 @@ sampling_params = SamplingParams(
     max_tokens=config["sampling"].get("max_tokens", 350),
 )
 
-def get_llm_reply(user_input: str, context: List[dict]) -> str:
+def get_llm_reply(user_input: str, context: List) -> str:
     prompt_parts = [instruction]
 
     for msg in context:
-        role = msg.get("role")
-        content = msg.get("content")
+        role = getattr(msg, "role", None) or getattr(msg, "type", None)
+        content = getattr(msg, "content", None)
         if role == "user":
             prompt_parts.append(f"Пользователь: {content}")
         elif role == "bot":
             prompt_parts.append(f"Бот: {content}")
 
-    prompt_parts.append(f"Пользователь: {user_input}")
+
     prompt_parts.append("Бот:")
 
     prompt = "\n".join(prompt_parts)
 
+    
     output = llm.generate(prompt, sampling_params)
     generated_text = output[0].outputs[0].text
     
     
-    cleaned_text = re.split(r"\s*bot:|\s*бот:|\s*пользователь:", generated_text, flags=re.IGNORECASE)[0]
+    cleaned_text = re.split(r"\s*bot:|\s*бот:", generated_text, flags=re.IGNORECASE)[0] #|\s*пользователь:
     return cleaned_text.strip()
