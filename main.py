@@ -61,7 +61,7 @@ def build_locations_block(locations: list) -> str:
         return "Информация про филиалы Real-IT отсутствует."
     return "Информация про филиалы Real-IT только в Екатеринбурге:\n" + "\n".join(
         f"- {l.get('title', 'Без названия')} ({l.get('street', '')}): "
-        f"{l.get('entrance', '')} ({l.get('url', '')})."
+        f"{l.get('entrance', '')}."
         for l in locations
     )
 
