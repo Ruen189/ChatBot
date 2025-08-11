@@ -1,0 +1,42 @@
+Екатеринбург:
+  - id: center
+    title: Центральный
+    street: ул.8 марта 2
+    entrance: Вход со стороны ул.Володарского.
+    url: https://it-schools.org/img/maps/map12.jpg
+
+  - id: ural
+    title: Уралец
+    street: ул.Серова 6
+    entrance: Вход находится с лицевой стороны здания.
+    url: https://it-schools.org/img/maps/map16.jpg
+
+  - id: belinsk
+    title: Белинского
+    street: ул.Белинского 218/1
+    entrance: Вход с дальнего края здания.
+    url: https://it-schools.org/img/maps/map15.jpg
+
+  - id: akadem
+    title: Академ
+    street: ул.Вильельма Де Генина 37
+    entrance: Вход находится между зданием 37 и 45.
+    url: https://it-schools.org/img/maps/map17.jpg
+
+  - id: urfu
+    title: УрФУ
+    street: ул.Мира 34Г
+    entrance: Вход со стороны ул.Гагарина во дворы.
+    url: https://it-schools.org/img/maps/map11.jpg
+
+  - id: viz
+    title: ВИЗ
+    street: ул.Татищева 98
+    entrance: Вход находится с лицевой стороны здания.
+    url: https://it-schools.org/img/maps/map13.jpg
+
+  - id: library
+    title: Библиотечная
+    street: ул.Библиотечная 43 офис 1, домофон 1
+    entrance: Вход находится в салоне красоты на 2 этаже.
+    url: https://it-schools.org/img/maps/map14.jpg
