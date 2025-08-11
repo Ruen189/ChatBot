@@ -26,8 +26,8 @@
             padding: 10px;
             border-radius: 6px;
             max-width: 80%;
-            white-space: pre-wrap; /* перенос строк внутри сообщений */
-            overflow: visible; /* убираем скролл внутри сообщения */
+            white-space: pre-wrap; /* переносы строк внутри сообщений */
+            overflow: visible;
             word-break: break-word;
         }
         .user {
@@ -65,11 +65,13 @@
     <div id="inputArea">
         <textarea id="userInput" rows="2" placeholder="Введите сообщение..."></textarea>
         <button onclick="sendMessage()">Отправить</button>
+        <button id="clearBtn">Очистить чат</button>
     </div>
 
     <script>
         const chatEl = document.getElementById("chat");
         const userInputEl = document.getElementById("userInput");
+        const clearBtn = document.getElementById("clearBtn");
 
         let context = [];
 
@@ -137,13 +139,17 @@
             }
         }
 
+        clearBtn.addEventListener("click", () => {
+            chatEl.innerHTML = "";
+            context = [];
+        });
+
         userInputEl.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
-
     </script>
 </body>
 </html>

@@ -108,14 +108,36 @@ class GenerateRequest(BaseModel):
     context: List[str] = Field(default_factory=list)
 
     @field_validator("context")
-    def check_context_length(cls, v):
+    def truncate_context_length(cls, v):
         if not isinstance(v, list):
             raise TypeError("context must be a list")
-        for s in v:
-            if len(s) > 1000:
-                raise ValueError("Each context string must be at most 1000 characters")
-        return v
-
+        max_total_length = 2000  # максимальная суммарная длина
+        
+        # Обрезаем каждую строку, если она слишком длинная
+        v = [s if len(s) <= 1000 else s[-1000:] for s in v]
+        
+        total_length = sum(len(s) for s in v)
+        if total_length <= max_total_length:
+            return v
+        
+        # Оставляем последние предложения из списка, пока длина не влезет в лимит
+        truncated_context = []
+        length_accum = 0
+        # идём с конца, добавляем пока не превысим лимит
+        for s in reversed(v):
+            if length_accum + len(s) > max_total_length:
+                # добавим часть строки с конца, чтобы уложиться
+                allowed_len = max_total_length - length_accum
+                if allowed_len > 0:
+                    truncated_context.append(s[-allowed_len:])
+                break
+            else:
+                truncated_context.append(s)
+                length_accum += len(s)
+        # восстановим порядок (был обратный)
+        truncated_context.reverse()
+        return truncated_context
+    
 sampling_params = SamplingParams(
         temperature=config["sampling"].get("temperature", 0.3),
         top_p=config["sampling"].get("top_p", 0.5),
