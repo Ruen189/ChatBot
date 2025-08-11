@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Чат с API Real-IT</title>
     <style>
         body {
@@ -18,12 +18,17 @@
             padding: 10px;
             overflow-y: auto;
             background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
         .message {
-            margin: 8px 0;
-            padding: 8px;
+            padding: 10px;
             border-radius: 6px;
             max-width: 80%;
+            white-space: pre-wrap; /* перенос строк внутри сообщений */
+            overflow: visible; /* убираем скролл внутри сообщения */
+            word-break: break-word;
         }
         .user {
             background: #d1e7ff;
@@ -42,10 +47,14 @@
             flex: 1;
             padding: 8px;
             resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.4;
         }
         button {
             padding: 8px 16px;
             cursor: pointer;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -64,16 +73,29 @@
 
         let context = [];
 
-        // Хардкод API ключа сюда:
         const API_URL = "http://wobirservers.ru:8000/generate";
         const API_KEY = "apikey1";
 
         function addMessage(text, sender) {
             const msg = document.createElement("div");
             msg.classList.add("message", sender);
-            msg.textContent = text;
-            chatEl.appendChild(msg);
-            chatEl.scrollTop = chatEl.scrollHeight;
+            if (sender === "bot") {
+                msg.textContent = "";
+                chatEl.appendChild(msg);
+                typeWriterEffect(msg, text);
+            } else {
+                msg.textContent = text;
+                chatEl.appendChild(msg);
+                chatEl.scrollTop = chatEl.scrollHeight;
+            }
+        }
+
+        async function typeWriterEffect(element, text) {
+            for (let i = 0; i < text.length; i++) {
+                element.textContent += text.charAt(i);
+                chatEl.scrollTop = chatEl.scrollHeight;
+                await new Promise(resolve => setTimeout(resolve, 30));
+            }
         }
 
         async function sendMessage() {
@@ -121,6 +143,7 @@
                 sendMessage();
             }
         });
+
     </script>
 </body>
 </html>

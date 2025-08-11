@@ -116,17 +116,16 @@ class GenerateRequest(BaseModel):
                 raise ValueError("Each context string must be at most 1000 characters")
         return v
 
-
-
-def get_llm_reply(user_input: str, context: List[str],
-                  max_new_tokens: Optional[int] = None) -> str:
-    prompt = "\n".join([instruction] + context +
-                       [f"Пользователь: {user_input}", "Бот:"])
-    sampling_params = SamplingParams(
+sampling_params = SamplingParams(
         temperature=config["sampling"].get("temperature", 0.3),
         top_p=config["sampling"].get("top_p", 0.5),
-        max_tokens=max_new_tokens or config["sampling"].get("max_tokens", 350),
+        max_tokens=config["sampling"].get("max_tokens", 350),
     )
+
+def get_llm_reply(user_input: str, context: List[str]) -> str:
+    prompt = "\n".join([instruction] + context +
+                       [f"Пользователь: {user_input}", "Бот:"])
+    
     output = llm.generate(prompt, sampling_params)
     generated_text = output[0].outputs[0].text
     return generated_text.rsplit("Бот:", 1)[-1].strip()
