@@ -6,6 +6,7 @@ from config import config
 from textblock_formatter import build_courses_block, build_locations_block
 from data_loader import load_yaml_data
 from pathlib import Path
+from models import Message
 
 COURSES = load_yaml_data(Path(config["paths"]["courses"]))
 LOCATIONS = load_yaml_data(Path(config["paths"]["locations"]))
@@ -15,7 +16,7 @@ instruction = (
     build_courses_block(COURSES) + "\n" +
     build_locations_block(LOCATIONS) + "\n\n"
 )
-print(instruction)
+print(f"Instruction: {instruction}")
 llm: Optional[LLM] = None
 
 @asynccontextmanager
@@ -37,12 +38,25 @@ sampling_params = SamplingParams(
     max_tokens=config["sampling"].get("max_tokens", 350),
 )
 
-def get_llm_reply(user_input: str, context: List[str]) -> str:
-    """Формирование промпта и получение ответа от модели."""
-    prompt = "\n".join(
-        [instruction] + context + [f"Пользователь: {user_input}", "Бот:"]
-    )
+def get_llm_reply(user_input: str, context: List[dict]) -> str:
+    prompt_parts = [instruction]
+
+    for msg in context:
+        role = msg.get("role")
+        content = msg.get("content")
+        if role == "user":
+            prompt_parts.append(f"Пользователь: {content}")
+        elif role == "bot":
+            prompt_parts.append(f"Бот: {content}")
+
+    prompt_parts.append(f"Пользователь: {user_input}")
+    prompt_parts.append("Бот:")
+
+    prompt = "\n".join(prompt_parts)
+
     output = llm.generate(prompt, sampling_params)
     generated_text = output[0].outputs[0].text
-    cleaned_text = re.split(r"\s*bot:|\s*бот:", generated_text, flags=re.IGNORECASE)[0]
+    
+    
+    cleaned_text = re.split(r"\s*bot:|\s*бот:|\s*пользователь:", generated_text, flags=re.IGNORECASE)[0]
     return cleaned_text.strip()

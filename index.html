@@ -26,7 +26,7 @@
             padding: 10px;
             border-radius: 6px;
             max-width: 80%;
-            white-space: pre-wrap; /* переносы строк внутри сообщений */
+            white-space: pre-wrap; /* переносы строк */
             overflow: visible;
             word-break: break-word;
         }
@@ -73,6 +73,7 @@
         const userInputEl = document.getElementById("userInput");
         const clearBtn = document.getElementById("clearBtn");
 
+        // Теперь context — массив объектов с ролью и контентом
         let context = [];
 
         const API_URL = "http://wobirservers.ru:8000/generate";
@@ -108,7 +109,8 @@
             }
 
             addMessage(userText, "user");
-            context.push(userText);
+            // Добавляем сообщение пользователя в context с ролью
+            context.push({ role: "user", content: userText });
             userInputEl.value = "";
 
             try {
@@ -132,7 +134,8 @@
 
                 const data = await res.json();
                 addMessage(data.reply, "bot");
-                context.push(data.reply);
+                // Добавляем ответ бота с ролью
+                context.push({ role: "bot", content: data.reply });
 
             } catch (err) {
                 addMessage(`Ошибка соединения: ${err}`, "bot");
