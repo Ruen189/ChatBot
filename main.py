@@ -57,7 +57,7 @@ app.add_middleware(
 @app.post("/generate")
 async def generate(req: GenerateRequest, x_api_key: str = Header(None)):
     await verify_api_key(x_api_key)
-    reply = get_llm_reply(req.user_input, req.context)
+    reply = get_llm_reply(req.context)
     return {"reply": reply}
 
 if __name__ == "__main__":

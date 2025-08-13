@@ -6,7 +6,7 @@ from config import config
 from textblock_formatter import build_courses_block, build_locations_block
 from data_loader import load_yaml_data
 from pathlib import Path
-from models import Message
+
 
 COURSES = load_yaml_data(Path(config["paths"]["courses"]))
 LOCATIONS = load_yaml_data(Path(config["paths"]["locations"]))
@@ -38,7 +38,7 @@ sampling_params = SamplingParams(
     max_tokens=config["sampling"].get("max_tokens", 350),
 )
 
-def get_llm_reply(user_input: str, context: List) -> str:
+def get_llm_reply(context: List) -> str:
     
     prompt_parts = [instruction] 
     prompt_parts.append(f"Диалог с пользователем:")
