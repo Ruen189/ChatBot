@@ -15,8 +15,8 @@ class GenerateRequest(BaseModel):
 
     @field_validator("context")
     def truncate_context_length(cls, messages: List[Message]):
-        """Обрезает контекст, чтобы суммарная длина была <= 2000 символов."""
-        max_total_length = 2000
+        """Обрезает контекст, чтобы суммарная длина была <= 1000 символов."""
+        max_total_length = 1000
 
         # Обрезаем отдельные сообщения до 1000 символов
         for msg in messages:

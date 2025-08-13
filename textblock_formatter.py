@@ -4,12 +4,12 @@ def build_courses_block(courses_data: dict) -> str:
     if not courses:
         return "Информация про курсы в Real-IT отсутствует."
 
-    return "БЛОК ПРО КУРСЫ В Real-IT:\n" + "\n".join(
+    return "Блок курсы Real-IT:\n" + "\n".join(
         f"- {c.get('title', 'Без названия')} "
         f"(от {c.get('min_age', '?')} до {c.get('max_age', '?')} лет): "
         f"{c.get('description', '')} ({c.get('url', '')})"
         for c in courses
-    ) + "\nКОНЕЦ БЛОКА ПРО КУРСЫ"
+    ) + "\nКОНЕЦ БЛОКА"
 
 def build_locations_block(locations: dict) -> str:
     """Формирование текстового блока с филиалами по всем городам."""
@@ -22,7 +22,7 @@ def build_locations_block(locations: dict) -> str:
             blocks.append(f"Информация про филиалы Real-IT в городе {city} отсутствует.")
             continue
 
-        city_block = f"\nначало блок про филиалы в городе {city}:\n" + "\n".join(
+        city_block = f"Блок про филиалы в городе {city}:\n" + "\n".join(
             f"- {l.get('title', 'Без названия')} ({l.get('street', '')}): "
             f"{l.get('entrance', '')}."
             for l in city_locations
