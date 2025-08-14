@@ -13,17 +13,19 @@ llm: Optional[LLM] = None
 sampling_params: Optional[SamplingParams] = None
 system_prompt: str = ""
 
-CONFIG_PATH = Path(config["paths"]["config"])
+CONFIG_PATH = Path(config["paths"]["samples"])
 SYSTEM_PROMPT_PATH = Path(config["paths"]["system_prompt"])
 
 def make_instruction() -> str:
     """Создание инструкции для LLM."""
-    courses = load_yaml(Path(config["paths"]["courses"]))
+    courses_txt = load_txt(Path(config["paths"]["about_realit"]))
+    #courses = load_yaml(Path(config["paths"]["courses"]))
     locations = load_yaml(Path(config["paths"]["locations"]))
     return (
-        "Инструкция:\n" +
+        "Системный промпт:\n" +
         system_prompt + "\n" +
-        build_courses_block(courses) + "\n" +
+        courses_txt + "\n" +
+        #build_courses_block(courses) + "\n" +
         build_locations_block(locations) + "\n"
     )
     
@@ -37,10 +39,12 @@ def load_sampling_params():
         max_tokens=cfg["sampling"].get("max_tokens", 350),
         stop=cfg["sampling"].get("stop", "Пользователь:"),
     )
-
+    print(f"Загружены параметры выборки: {sampling_params}")
+    
 def load_system_prompt():
     global system_prompt
     system_prompt = load_txt(SYSTEM_PROMPT_PATH)
+    print(f"Загружен системный промпт: {system_prompt}")
 
 class ConfigWatcher(FileSystemEventHandler):
     def on_modified(self, event):
@@ -56,10 +60,18 @@ async def lifespan(app):
     llm = LLM(
         model=config["model"].get("name","PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
         quantization=config["model"].get("quantization", "awq_marlin"),
-        gpu_memory_utilization=config["model"].get("gpu_memory_utilization", "0.6"),
+        gpu_memory_utilization=config["model"].get("gpu_memory_utilization", 0.6),
         dtype=config["model"].get("dtype", "auto"),
-        max_model_len=config["model"].get("max_model_len", 5000),
+        max_model_len=config["model"].get("max_model_len", None),
     )
+    load_sampling_params()
+    load_system_prompt()
+    
+    # Прогрев модели
+    warmup_prompt = "Тестовый промпт для прогрева"
+    _ = llm.generate(warmup_prompt, SamplingParams(max_tokens=5))
+    print("Модель прогрета.")
+
     # Запускаем watchdog
     event_handler = ConfigWatcher()
     observer = Observer()
@@ -85,13 +97,12 @@ def get_llm_reply(context: list) -> str:
     prompt_parts.append("Бот:")
 
     prompt = "\n".join(prompt_parts)
-    print(f"Sampling params: {sampling_params}")
-    print(f"Generated prompt: {prompt}")
+    
+    print(f"Сформированный промпт:\n{prompt}")
     
     output = llm.generate(prompt, sampling_params)
+    
     generated_text = output[0].outputs[0].text
-
-    print(f"Generated text: {generated_text}")
 
     cleaned_text = re.sub(r"\s*бот:|\s*bot:", "", generated_text, flags=re.IGNORECASE)
     cleaned_text = re.split(r"\s*пользователь:", cleaned_text, flags=re.IGNORECASE)[0]

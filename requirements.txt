@@ -1,8 +1,8 @@
+flashinfer-python
 fastapi
 vllm
 pydantic
 uvicorn
 pathlib
 pyyaml
-flashinfer-python==0.2.4
 watchdog
