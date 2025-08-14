@@ -7,9 +7,9 @@ from textblock_formatter import build_courses_block, build_locations_block
 from data_loader import load_yaml_data
 from pathlib import Path
 
-
 COURSES = load_yaml_data(Path(config["paths"]["courses"]))
 LOCATIONS = load_yaml_data(Path(config["paths"]["locations"]))
+
 
 instruction = (
     "Инструкция для LLM:\n" +
@@ -17,6 +17,7 @@ instruction = (
     build_courses_block(COURSES) + "\n" +
     build_locations_block(LOCATIONS) + "\n\n"
 )
+
 llm: Optional[LLM] = None
 
 @asynccontextmanager
