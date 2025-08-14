@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import HTTPException, Header
-from config import API_KEYS
+from loader import API_KEYS
 
 async def verify_api_key(x_api_key: Optional[str] = Header(None)) -> None:
     """Проверка API-ключа."""

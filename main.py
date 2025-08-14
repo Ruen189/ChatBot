@@ -3,7 +3,7 @@ from fastapi import FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import time
-from config import config
+from loader import config
 from security import verify_api_key
 from llm_service import lifespan, get_llm_reply
 from models import GenerateRequest
