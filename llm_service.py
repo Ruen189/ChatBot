@@ -7,7 +7,6 @@ from textblock_formatter import build_courses_block, build_locations_block
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import yaml
 
 llm: Optional[LLM] = None
 sampling_params: Optional[SamplingParams] = None
@@ -15,44 +14,44 @@ system_prompt: str = ""
 
 CONFIG_PATH = Path(config["paths"]["samples"])
 SYSTEM_PROMPT_PATH = Path(config["paths"]["system_prompt"])
+COURSES_PATH = Path(config["paths"]["courses"])
+LOCATIONS_PATH = Path(config["paths"]["locations"])
 
-def make_instruction() -> str:
-    """Создание инструкции для LLM."""
-    courses_txt = load_txt(Path(config["paths"]["about_realit"]))
-    courses = load_yaml(Path(config["paths"]["courses"]))
-    locations = load_yaml(Path(config["paths"]["locations"]))
-    return (
-        "Системный промпт:\n" +
-        system_prompt + "\n" +
-        #courses_txt + "\n" +
-        build_courses_block(courses) + "\n" +
-        build_locations_block(locations) + "\n"
-    )
-    
+
+
 def load_sampling_params():
     global sampling_params
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+    cfg = load_yaml(CONFIG_PATH)
     sampling_params = SamplingParams(
         temperature=cfg["sampling"].get("temperature", 0.3),
         top_p=cfg["sampling"].get("top_p", 0.5),
         max_tokens=cfg["sampling"].get("max_tokens", 350),
         stop=cfg["sampling"].get("stop", "Пользователь:"),
     )
-    print(f"Загружены параметры выборки: {sampling_params}")
+    print(f"Загружены параметры сэмплинга:\n{sampling_params}")
     
 def load_system_prompt():
     global system_prompt
-    system_prompt = load_txt(SYSTEM_PROMPT_PATH)
-    print(f"Загружен системный промпт: {system_prompt}")
+    system_txt = load_txt(SYSTEM_PROMPT_PATH)
+    courses = load_yaml(COURSES_PATH)
+    locations = load_yaml(LOCATIONS_PATH)
+    system_prompt = (
+        "Системный промпт:\n" +
+        system_txt + "\n" +
+        build_courses_block(courses) + "\n" +
+        build_locations_block(locations) + "\n"
+    )
+    print(f"Загружен системный промпт:\n{system_prompt}")
 
 class ConfigWatcher(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path.endswith(CONFIG_PATH.name):
             load_sampling_params()
-        elif event.src_path.endswith(SYSTEM_PROMPT_PATH.name):
+        elif event.src_path.endswith(SYSTEM_PROMPT_PATH.name) \
+                or event.src_path.endswith(LOCATIONS_PATH.name) \
+                or event.src_path.endswith(COURSES_PATH.name):
             load_system_prompt()
-
+            
 @asynccontextmanager
 async def lifespan(app):
     """Инициализация LLM при запуске приложения."""
@@ -67,24 +66,20 @@ async def lifespan(app):
     load_sampling_params()
     load_system_prompt()
     
-    # Прогрев модели
-    warmup_prompt = "Тестовый промпт для прогрева"
-    _ = llm.generate(warmup_prompt, SamplingParams(max_tokens=5))
-    print("Модель прогрета.")
+    _ = llm.generate(system_prompt, SamplingParams(max_tokens=5))
 
-    # Запускаем watchdog
     event_handler = ConfigWatcher()
     observer = Observer()
-    observer.schedule(event_handler, ".", recursive=False)
+    observer.schedule(event_handler, ".", recursive=True)
     observer.start()
 
-    yield  # приложение работает
-
+    yield
     observer.stop()
     observer.join()
 
+
 def get_llm_reply(context: list) -> str:
-    prompt_parts = [make_instruction()]
+    prompt_parts = [system_prompt]
     prompt_parts.append(f"Диалог с пользователем:")
     msg_history = []
     for msg in context:
@@ -99,13 +94,10 @@ def get_llm_reply(context: list) -> str:
 
     prompt = "\n".join(prompt_parts)
     
-    print(f"Сформированный промпт:\n{prompt}")
-    
     output = llm.generate(prompt, sampling_params)
     
     generated_text = output[0].outputs[0].text
 
-    print(F"Ответ модели:{generated_text}")
     cleaned_text = re.sub(r"\s*бот:|\s*bot:", "", generated_text, flags=re.IGNORECASE)
     cleaned_text = re.split(r"\s*пользователь:", cleaned_text, flags=re.IGNORECASE)[0]
     return cleaned_text.strip()

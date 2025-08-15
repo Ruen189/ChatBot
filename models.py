@@ -10,5 +10,4 @@ class Message(BaseModel):
 
 class GenerateRequest(BaseModel):
     """Модель входных данных для генерации ответа."""
-    user_input: str = Field(..., min_length=1)  # Нет max_length
     context: List[Message] = Field(default_factory=list)
