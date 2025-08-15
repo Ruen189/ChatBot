@@ -105,6 +105,7 @@ def get_llm_reply(context: list) -> str:
     
     generated_text = output[0].outputs[0].text
 
+    print(F"Ответ модели:{generated_text}")
     cleaned_text = re.sub(r"\s*бот:|\s*bot:", "", generated_text, flags=re.IGNORECASE)
     cleaned_text = re.split(r"\s*пользователь:", cleaned_text, flags=re.IGNORECASE)[0]
     return cleaned_text.strip()
