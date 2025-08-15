@@ -19,13 +19,13 @@ SYSTEM_PROMPT_PATH = Path(config["paths"]["system_prompt"])
 def make_instruction() -> str:
     """Создание инструкции для LLM."""
     courses_txt = load_txt(Path(config["paths"]["about_realit"]))
-    #courses = load_yaml(Path(config["paths"]["courses"]))
+    courses = load_yaml(Path(config["paths"]["courses"]))
     locations = load_yaml(Path(config["paths"]["locations"]))
     return (
         "Системный промпт:\n" +
         system_prompt + "\n" +
-        courses_txt + "\n" +
-        #build_courses_block(courses) + "\n" +
+        #courses_txt + "\n" +
+        build_courses_block(courses) + "\n" +
         build_locations_block(locations) + "\n"
     )
     
@@ -86,6 +86,7 @@ async def lifespan(app):
 def get_llm_reply(context: list) -> str:
     prompt_parts = [make_instruction()]
     prompt_parts.append(f"Диалог с пользователем:")
+    msg_history = []
     for msg in context:
         role = getattr(msg, "role", None) or getattr(msg, "type", None)
         content = getattr(msg, "content", None)
