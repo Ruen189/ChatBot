@@ -9,7 +9,7 @@ from python.llm_service import lifespan, get_llm_reply
 from fastapi.responses import StreamingResponse
 import json
 from python.models import GenerateRequest
-
+import uuid
 
 log_cfg = config.get("logging", {})
 logging.basicConfig(
@@ -34,7 +34,9 @@ async def log_requests(request: Request, call_next):
 
     body_bytes = await request.body()
     body_text = body_bytes.decode('utf-8') if body_bytes else "EMPTY"
-
+    
+    client_ip = request.client.host if request.client else "unknown"
+    
     response = await call_next(request)
 
     process_time = (time.time() - start_time) * 1000
@@ -43,6 +45,7 @@ async def log_requests(request: Request, call_next):
         f"{request.method} {request.url.path} "
         f"Status: {response.status_code} "
         f"Time: {process_time:.2f}ms "
+        f"IP: {client_ip} "
         f"Body: {body_text}"
     )
 
@@ -59,10 +62,13 @@ app.add_middleware(
 @app.post("/generate")
 async def generate(req: GenerateRequest, x_api_key: str = Header(None)):
     await verify_api_key(x_api_key)
+    
+    request_id = f"req-{uuid.uuid4().hex}"
+    logger.info(f"[API REQUEST] request_id={request_id}, context_len={len(req.context)}")
 
     async def stream():
         previous_text = ""
-        async for chunk in get_llm_reply(req.context):
+        async for chunk in get_llm_reply(req.context, request_id=request_id):
             cleaned_chunk = re.sub(r'[ \t]+', ' ', chunk.strip())
 
 

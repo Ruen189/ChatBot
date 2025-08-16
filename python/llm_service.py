@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from typing import Optional, AsyncGenerator
-from vllm import LLM, SamplingParams
+from vllm import SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.v1.engine.async_llm import AsyncLLM
 from .loader import config, load_yaml, load_txt
@@ -8,8 +8,8 @@ from .textblock_formatter import build_courses_block, build_locations_block
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-
-llm: Optional[LLM] = None
+import uuid
+llm: Optional[AsyncLLM] = None
 sampling_params: Optional[SamplingParams] = None
 system_prompt: str = ""
 
@@ -19,9 +19,11 @@ COURSES_PATH = Path(config["paths"]["courses"])
 LOCATIONS_PATH = Path(config["paths"]["locations"])
 MODEL_PATH = Path(config["paths"]["model"])
 
-def generate_answer(prompt: str, sampling_params: SamplingParams):
+def generate_answer(prompt: str, sampling_params: SamplingParams, request_id: Optional[str] = None):
+    if request_id is None:
+        request_id = f"chat-{uuid.uuid4().hex}"
     return llm.generate(
-        request_id="chat-stream",
+        request_id=request_id,
         prompt=prompt,
         sampling_params=sampling_params
     )   
@@ -52,6 +54,8 @@ def load_system_prompt():
 
 def load_LLM():
     global llm
+    if isinstance(llm, AsyncLLM):
+        del llm
     cfg = load_yaml(MODEL_PATH)
     engine_args = AsyncEngineArgs(
         model=cfg["model"].get("name", "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
@@ -97,7 +101,7 @@ async def lifespan(app):
     observer.stop()
     observer.join()
 
-async def get_llm_reply(context: list) -> AsyncGenerator[str, None]:
+async def get_llm_reply(context: list, request_id: Optional[str] = None) -> AsyncGenerator[str, None]:
     prompt_parts = [system_prompt, "Диалог с пользователем:"]
     for msg in context:
         role = getattr(msg, "role", None) or getattr(msg, "type", None)
@@ -110,7 +114,7 @@ async def get_llm_reply(context: list) -> AsyncGenerator[str, None]:
 
     prompt = "\n".join(prompt_parts)
 
-    async for output in generate_answer(prompt, sampling_params):
+    async for output in generate_answer(prompt, sampling_params, request_id):
         for completion in output.outputs:
             if completion.text:
                 yield completion.text
