@@ -1,4 +1,3 @@
-import re
 from contextlib import asynccontextmanager
 from typing import Optional, AsyncGenerator
 from vllm import LLM, SamplingParams
@@ -18,8 +17,14 @@ CONFIG_PATH = Path(config["paths"]["samples"])
 SYSTEM_PROMPT_PATH = Path(config["paths"]["system_prompt"])
 COURSES_PATH = Path(config["paths"]["courses"])
 LOCATIONS_PATH = Path(config["paths"]["locations"])
+MODEL_PATH = Path(config["paths"]["model"])
 
-
+def generate_answer(prompt: str, sampling_params: SamplingParams):
+    return llm.generate(
+        request_id="chat-stream",
+        prompt=prompt,
+        sampling_params=sampling_params
+    )   
 
 def load_sampling_params():
     global sampling_params
@@ -45,48 +50,52 @@ def load_system_prompt():
     )
     print(f"Загружен новый системный промпт")
 
+def load_LLM():
+    global llm
+    cfg = load_yaml(MODEL_PATH)
+    engine_args = AsyncEngineArgs(
+        model=cfg["model"].get("name", "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
+        quantization=cfg["model"].get("quantization", "awq_marlin"),
+        gpu_memory_utilization=cfg["model"].get("gpu_memory_utilization", 0.6),
+        dtype=cfg["model"].get("dtype", "auto"),
+        max_model_len=cfg["model"].get("max_model_len", None),
+    )
+    llm = AsyncLLM.from_engine_args(engine_args)
+    
+    print(f"Загружена модель")
+    
 class ConfigWatcher(FileSystemEventHandler):
     def on_modified(self, event):
+        print(f"Обнаружено изменение в файле: {event.src_path}")
         if event.src_path.endswith(CONFIG_PATH.name):
             load_sampling_params()
         elif event.src_path.endswith(SYSTEM_PROMPT_PATH.name) \
                 or event.src_path.endswith(LOCATIONS_PATH.name) \
                 or event.src_path.endswith(COURSES_PATH.name):
             load_system_prompt()
-            
+        elif event.src_path.endswith(MODEL_PATH.name):
+            load_LLM()
+        
 @asynccontextmanager
 async def lifespan(app):
     """Инициализация LLM при запуске приложения."""
-    global llm
-    engine_args = AsyncEngineArgs(
-        model=config["model"].get("name", "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
-        quantization=config["model"].get("quantization", "awq_marlin"),
-        gpu_memory_utilization=config["model"].get("gpu_memory_utilization", 0.6),
-        dtype=config["model"].get("dtype", "auto"),
-        max_model_len=config["model"].get("max_model_len", None),
-    )
-    llm = AsyncLLM.from_engine_args(engine_args)
-    
     load_sampling_params()
     load_system_prompt()
+    load_LLM()
     
-    # Мини-тест на прогрев
-    async for _ in llm.generate(
-        request_id="warmup",
-        prompt=system_prompt,
-        sampling_params=SamplingParams(max_tokens=5)
-    ):
-        break
-
+    async for _ in generate_answer(system_prompt+"Инициализация модели", SamplingParams(max_tokens=50)):
+        pass
+    print("LLM инициализирован")
+    
     event_handler = ConfigWatcher()
     observer = Observer()
     observer.schedule(event_handler, ".", recursive=True)
     observer.start()
 
     yield
+    
     observer.stop()
     observer.join()
-
 
 async def get_llm_reply(context: list) -> AsyncGenerator[str, None]:
     prompt_parts = [system_prompt, "Диалог с пользователем:"]
@@ -101,11 +110,7 @@ async def get_llm_reply(context: list) -> AsyncGenerator[str, None]:
 
     prompt = "\n".join(prompt_parts)
 
-    async for output in llm.generate(
-        request_id="chat-stream",
-        prompt=prompt,
-        sampling_params=sampling_params
-    ):
+    async for output in generate_answer(prompt, sampling_params):
         for completion in output.outputs:
             if completion.text:
                 yield completion.text

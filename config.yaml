@@ -1,16 +1,10 @@
-model:
-  name: "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"
-  quantization: "awq_marlin"
-  gpu_memory_utilization: 0.75
-  dtype: "auto"
-  max_model_len: 6000
-
 paths:
   samples: "configs/samples.yaml"
   courses: "configs/courses.yaml"
   locations: "configs/locations.yaml"
   system_prompt: "configs/system_prompt.txt"  
-
+  model: "configs/model.yaml"
+  
 logging:
   level: INFO
   format: "%(asctime)s %(levelname)s %(message)s"
