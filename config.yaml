@@ -5,16 +5,10 @@ paths:
   system_prompt: "configs/system_prompt.txt"  
   model: "configs/model.yaml"
   
-logging:
-  level: INFO
-  format: "%(asctime)s %(levelname)s %(message)s"
-  filename: "app.log"
-  filemode: "a"
-
 uvicorn:
   host: "0.0.0.0"
   port: 8000
-  reload: false
+  reload: True
   workers: 1
   log_level: "info"
 
