@@ -3,9 +3,12 @@ from fastapi import FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import time
+import re
 from loader import config
 from security import verify_api_key
 from llm_service import lifespan, get_llm_reply
+from fastapi.responses import StreamingResponse
+import json
 from models import GenerateRequest
 
 
@@ -57,8 +60,27 @@ app.add_middleware(
 @app.post("/generate")
 async def generate(req: GenerateRequest, x_api_key: str = Header(None)):
     await verify_api_key(x_api_key)
-    reply = get_llm_reply(req.context)
-    return {"reply": reply}
+
+    async def stream():
+        previous_text = ""
+        async for chunk in get_llm_reply(req.context):
+            cleaned_chunk = re.sub(r'[ \t]+', ' ', chunk.strip())
+
+
+            if cleaned_chunk.startswith(previous_text):
+                new_part = cleaned_chunk[len(previous_text):]
+            else:
+                new_part = cleaned_chunk
+
+            previous_text = cleaned_chunk
+
+            if new_part:
+                yield json.dumps({"text": new_part}, ensure_ascii=False) + "\n"
+
+        yield json.dumps({"done": True}, ensure_ascii=False) + "\n"
+
+    return StreamingResponse(stream(), media_type="application/json")
+
 
 if __name__ == "__main__":
     uvicorn.run(

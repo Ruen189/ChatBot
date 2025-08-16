@@ -1,7 +1,9 @@
 import re
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, AsyncGenerator
 from vllm import LLM, SamplingParams
+from vllm.engine.arg_utils import AsyncEngineArgs
+from vllm.v1.engine.async_llm import AsyncLLM
 from loader import config, load_yaml, load_txt
 from textblock_formatter import build_courses_block, build_locations_block
 from pathlib import Path
@@ -28,7 +30,7 @@ def load_sampling_params():
         max_tokens=cfg["sampling"].get("max_tokens", 350),
         stop=cfg["sampling"].get("stop", "Пользователь:"),
     )
-    print(f"Загружены параметры сэмплинга:\n{sampling_params}")
+    print(f"Загружены параметры сэмплинга")
     
 def load_system_prompt():
     global system_prompt
@@ -41,7 +43,7 @@ def load_system_prompt():
         build_courses_block(courses) + "\n" +
         build_locations_block(locations) + "\n"
     )
-    print(f"Загружен системный промпт:\n{system_prompt}")
+    print(f"Загружен новый системный промпт")
 
 class ConfigWatcher(FileSystemEventHandler):
     def on_modified(self, event):
@@ -56,17 +58,25 @@ class ConfigWatcher(FileSystemEventHandler):
 async def lifespan(app):
     """Инициализация LLM при запуске приложения."""
     global llm
-    llm = LLM(
-        model=config["model"].get("name","PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
+    engine_args = AsyncEngineArgs(
+        model=config["model"].get("name", "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
         quantization=config["model"].get("quantization", "awq_marlin"),
         gpu_memory_utilization=config["model"].get("gpu_memory_utilization", 0.6),
         dtype=config["model"].get("dtype", "auto"),
         max_model_len=config["model"].get("max_model_len", None),
     )
+    llm = AsyncLLM.from_engine_args(engine_args)
+    
     load_sampling_params()
     load_system_prompt()
     
-    _ = llm.generate(system_prompt, SamplingParams(max_tokens=5))
+    # Мини-тест на прогрев
+    async for _ in llm.generate(
+        request_id="warmup",
+        prompt=system_prompt,
+        sampling_params=SamplingParams(max_tokens=5)
+    ):
+        break
 
     event_handler = ConfigWatcher()
     observer = Observer()
@@ -78,10 +88,8 @@ async def lifespan(app):
     observer.join()
 
 
-def get_llm_reply(context: list) -> str:
-    prompt_parts = [system_prompt]
-    prompt_parts.append(f"Диалог с пользователем:")
-    msg_history = []
+async def get_llm_reply(context: list) -> AsyncGenerator[str, None]:
+    prompt_parts = [system_prompt, "Диалог с пользователем:"]
     for msg in context:
         role = getattr(msg, "role", None) or getattr(msg, "type", None)
         content = getattr(msg, "content", None)
@@ -89,15 +97,15 @@ def get_llm_reply(context: list) -> str:
             prompt_parts.append(f"Пользователь: {content}")
         elif role == "bot":
             prompt_parts.append(f"Бот: {content}")
-
     prompt_parts.append("Бот:")
 
     prompt = "\n".join(prompt_parts)
-    
-    output = llm.generate(prompt, sampling_params)
-    
-    generated_text = output[0].outputs[0].text
 
-    cleaned_text = re.sub(r"\s*бот:|\s*bot:", "", generated_text, flags=re.IGNORECASE)
-    cleaned_text = re.split(r"\s*пользователь:", cleaned_text, flags=re.IGNORECASE)[0]
-    return cleaned_text.strip()
+    async for output in llm.generate(
+        request_id="chat-stream",
+        prompt=prompt,
+        sampling_params=sampling_params
+    ):
+        for completion in output.outputs:
+            if completion.text:
+                yield completion.text
