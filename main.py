@@ -4,12 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 import time
 import re
-from loader import config
-from security import verify_api_key
-from llm_service import lifespan, get_llm_reply
+from python.loader import config
+from python.security import verify_api_key
+from python.llm_service import lifespan, get_llm_reply
 from fastapi.responses import StreamingResponse
 import json
-from models import GenerateRequest
+from python.models import GenerateRequest
 
 
 log_cfg = config.get("logging", {})
