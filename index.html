@@ -26,8 +26,7 @@
             padding: 10px;
             border-radius: 6px;
             max-width: 80%;
-            white-space: pre-wrap; /* переносы строк */
-            overflow: visible;
+            white-space: pre-wrap;
             word-break: break-word;
         }
         .user {
@@ -56,6 +55,20 @@
             cursor: pointer;
             font-size: 14px;
         }
+
+        /* Анимация курсора */
+        .cursor {
+            display: inline-block;
+            width: 1px;
+            background-color: black;
+            animation: blink 1s step-start infinite;
+            vertical-align: bottom;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            50.1%, 100% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -64,7 +77,7 @@
 
     <div id="inputArea">
         <textarea id="userInput" rows="2" placeholder="Введите сообщение..."></textarea>
-        <button onclick="sendMessage()">Отправить</button>
+        <button id="sendBtn" onclick="sendMessage()">Отправить</button>
         <button id="clearBtn">Очистить чат</button>
     </div>
 
@@ -72,73 +85,103 @@
         const chatEl = document.getElementById("chat");
         const userInputEl = document.getElementById("userInput");
         const clearBtn = document.getElementById("clearBtn");
+        const sendBtn = document.getElementById("sendBtn");
 
-        // Теперь context — массив объектов с ролью и контентом
         let context = [];
-
+        let isSending = false;   // флаг блокировки
         const API_URL = "http://wobirservers.ru:8000/generate";
         const API_KEY = "apikey1";
 
         function addMessage(text, sender) {
             const msg = document.createElement("div");
             msg.classList.add("message", sender);
-            if (sender === "bot") {
-                msg.textContent = "";
-                chatEl.appendChild(msg);
-                typeWriterEffect(msg, text);
-            } else {
-                msg.textContent = text;
-                chatEl.appendChild(msg);
-                chatEl.scrollTop = chatEl.scrollHeight;
-            }
-        }
-
-        async function typeWriterEffect(element, text) {
-            for (let i = 0; i < text.length; i++) {
-                element.textContent += text.charAt(i);
-                chatEl.scrollTop = chatEl.scrollHeight;
-                await new Promise(resolve => setTimeout(resolve, 30));
-            }
+            msg.textContent = text;
+            chatEl.appendChild(msg);
+            chatEl.scrollTop = chatEl.scrollHeight;
+            return msg;
         }
 
         async function sendMessage() {
+            if (isSending) return;  // блокируем повторное нажатие
             const userText = userInputEl.value.trim();
             if (!userText) {
                 alert("Введите сообщение");
                 return;
             }
 
+            isSending = true;
+            userInputEl.disabled = true; 
+            sendBtn.disabled = true;
+
             addMessage(userText, "user");
-            // Добавляем сообщение пользователя в context с ролью
             context.push({ role: "user", content: userText });
             userInputEl.value = "";
 
+            let botMsgEl = addMessage("", "bot");
+
+            // Создаем курсор
+            const cursor = document.createElement("span");
+            cursor.className = "cursor";
+            botMsgEl.appendChild(cursor);
+
             try {
-                const res = await fetch(API_URL, {
+                const resp = await fetch(API_URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "X-API-Key": API_KEY
                     },
-                    body: JSON.stringify({
-                        user_input: userText,
-                        context: context
-                    })
+                    body: JSON.stringify({ context })
                 });
 
-                if (!res.ok) {
-                    const err = await res.json();
-                    addMessage(`Ошибка: ${err.detail}`, "bot");
+                if (!resp.body) {
+                    botMsgEl.textContent = "Ошибка: сервер не поддерживает потоковую передачу.";
+                    cursor.remove();
                     return;
                 }
 
-                const data = await res.json();
-                addMessage(data.reply, "bot");
-                // Добавляем ответ бота с ролью
-                context.push({ role: "bot", content: data.reply });
+                const reader = resp.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+
+                    let boundary = buffer.indexOf("\n");
+                    while (boundary !== -1) {
+                        const chunk = buffer.slice(0, boundary).trim();
+                        buffer = buffer.slice(boundary + 1);
+                        if (chunk) {
+                            try {
+                                const data = JSON.parse(chunk);
+                                if (data.text) {
+                                    cursor.insertAdjacentText("beforebegin", data.text);
+                                }
+                                if (data.done) {
+                                    context.push({ role: "bot", content: botMsgEl.textContent.replace(cursor.textContent, "") });
+                                }
+                            } catch (err) {
+                                console.error("Ошибка парсинга чанка:", err, chunk);
+                            }
+                        }
+                        boundary = buffer.indexOf("\n");
+                    }
+                    chatEl.scrollTop = chatEl.scrollHeight;
+                }
+
+                // Убираем курсор после окончания
+                cursor.remove();
 
             } catch (err) {
-                addMessage(`Ошибка соединения: ${err}`, "bot");
+                botMsgEl.textContent = "Ошибка соединения с сервером: " + err;
+                cursor.remove();
+            } finally {
+                isSending = false;
+                userInputEl.disabled = false;
+                sendBtn.disabled = false;
+                userInputEl.focus();
             }
         }
 

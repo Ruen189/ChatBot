@@ -3,8 +3,8 @@ from typing import Optional, AsyncGenerator
 from vllm import SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.v1.engine.async_llm import AsyncLLM
-from loader import config, load_yaml, load_txt
-from textblock_formatter import build_courses_block, build_locations_block
+from .loader import config, load_yaml, load_txt
+from .textblock_formatter import build_courses_block, build_locations_block
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -103,6 +103,8 @@ async def lifespan(app):
     observer.join()
 
 async def get_llm_reply(context: list, request_id: Optional[str] = None) -> AsyncGenerator[str, None]:
+    
+
     prompt_parts = [system_prompt, "Диалог с пользователем:"]
     for msg in context:
         role = getattr(msg, "role", None) or getattr(msg, "type", None)
