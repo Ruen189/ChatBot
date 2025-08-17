@@ -1,5 +1,5 @@
-import yaml
 from typing import Optional
+import yaml
 from fastapi import HTTPException, Header
 
 def load_yaml(path: str = "config.yaml") -> dict:

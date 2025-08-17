@@ -1,13 +1,15 @@
+"""Модуль запуска"""
+import re
+import json
+import uuid
 import uvicorn
 from fastapi import FastAPI, Header
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-import re
+from python.models import GenerateRequest
 from python.loader import config, verify_api_key
 from python.llm_service import lifespan, get_llm_reply
-from fastapi.responses import StreamingResponse
-import json
-from python.models import GenerateRequest
-import uuid
+
 
 app = FastAPI(lifespan=lifespan)
 
