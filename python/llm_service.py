@@ -3,8 +3,8 @@ from typing import Optional, AsyncGenerator
 from vllm import SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.v1.engine.async_llm import AsyncLLM
-from .loader import config, load_yaml, load_txt
-from .textblock_formatter import build_courses_block, build_locations_block
+from python.loader import config, load_yaml, load_txt
+from python.textblock_formatter import build_courses_block, build_locations_block
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -20,14 +20,6 @@ COURSES_PATH = Path(config["paths"]["courses"])
 LOCATIONS_PATH = Path(config["paths"]["locations"])
 MODEL_PATH = Path(config["paths"]["model"])
 
-def generate_answer(prompt: str, sampling_params: SamplingParams, request_id: Optional[str] = None):
-    if request_id is None:
-        request_id = f"chat-{uuid.uuid4().hex}"
-    return llm.generate(
-        request_id=request_id,
-        prompt=prompt,
-        sampling_params=sampling_params
-    )   
 
 def load_sampling_params():
     global sampling_params
@@ -71,7 +63,6 @@ def load_LLM():
     
 class ConfigWatcher(FileSystemEventHandler):
     def on_modified(self, event):
-        print(f"Обнаружено изменение в файле: {event.src_path}")
         if event.src_path.endswith(CONFIG_PATH.name):
             load_sampling_params()
         elif event.src_path.endswith(SYSTEM_PROMPT_PATH.name) \
@@ -80,7 +71,17 @@ class ConfigWatcher(FileSystemEventHandler):
             load_system_prompt()
         elif event.src_path.endswith(MODEL_PATH.name):
             load_LLM()
-        
+
+def generate_answer(prompt: str, sampling_params: SamplingParams, request_id: Optional[str] = None):
+    if request_id is None:
+        request_id = f"chat-{uuid.uuid4().hex}"
+    return llm.generate(
+        request_id=request_id,
+        prompt=prompt,
+        sampling_params=sampling_params
+    )   
+
+
 @asynccontextmanager
 async def lifespan(app):
     """Инициализация LLM при запуске приложения."""
@@ -89,7 +90,7 @@ async def lifespan(app):
     load_LLM()
     
     async for _ in generate_answer(system_prompt+"Инициализация модели", SamplingParams(max_tokens=50)):
-        pass
+        break
     print("LLM инициализирован")
     
     event_handler = ConfigWatcher()
@@ -103,7 +104,7 @@ async def lifespan(app):
     observer.join()
 
 async def get_llm_reply(context: list, request_id: Optional[str] = None) -> AsyncGenerator[str, None]:
-    
+    """Генерация ответа LLM на основе контекста."""
 
     prompt_parts = [system_prompt, "Диалог с пользователем:"]
     for msg in context:
