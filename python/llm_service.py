@@ -1,87 +1,27 @@
-"""Модуль для работы с LLM-сервисом, включая инициализацию, загрузку конфигурации и генерацию ответов."""
+"""Модуль для работы с LLM-сервисом: инициализация, генерация ответов и мониторинг конфигов."""
 from contextlib import asynccontextmanager
-from typing import Optional, AsyncGenerator, Dict
+from typing import Optional, AsyncGenerator
 from vllm import SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.v1.engine.async_llm import AsyncLLM
-from python.loader import config, load_yaml, load_txt, CONFIG_PATH
-from python.textblock_formatter import build_block
+import python.loader as loader
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import uuid
 
 llm: Optional[AsyncLLM] = None
-sampling_params: Optional[SamplingParams] = None
 system_prompt: str = ""
 
-SAMPLES_PATH = None
-MODEL_PATH = None
-DATA_PATHS: Dict[str, Path] = {}
-
-
-def load_paths():
-    """Загружает пути из конфигурации."""
-    global SAMPLES_PATH, MODEL_PATH, DATA_PATHS
-    # Берем пути из config.yaml
-    if "paths" not in config:
-        raise ValueError("Отсутствует секция 'paths' в конфигурации")
-    if "samples" not in config["paths"] or "model" not in config["paths"]:
-        raise ValueError("Отсутствуют пути 'samples' или 'model' в секции 'paths' конфигурации")        
-    SAMPLES_PATH = Path(config["paths"]["samples"])
-    MODEL_PATH = Path(config["paths"]["model"])
-    DATA_PATHS = {
-        k: Path(v) for k, v in config["paths"].items()
-        if k not in ["samples", "model"]
-    }
-    
-def load_sampling_params():
-    global sampling_params
-    cfg = load_yaml(SAMPLES_PATH)
-    sampling_params = SamplingParams(
-        temperature=cfg["sampling"].get("temperature", 0.3),
-        top_p=cfg["sampling"].get("top_p", 0.5),
-        max_tokens=cfg["sampling"].get("max_tokens", 350),
-        stop=cfg["sampling"].get("stop", "Пользователь:"),
-    )
-    print(f"Загружены параметры сэмплинга")
-    
-def load_data_blocks() -> Dict[str, str]:
-    """
-    Загружает все файлы из config["paths"] (кроме samples и model).
-    Поддерживаются yaml и txt.
-    """
-    blocks = {}
-
-    for name, path in DATA_PATHS.items():
-        try:
-            if path.suffix == ".txt":
-                # Обычный текстовый блок
-                blocks[name] = load_txt(path)
-
-            elif path.suffix in (".yaml", ".yml"):
-                data = load_yaml(path)
-                if isinstance(data, dict) and len(data) == 1:
-                    key = list(data.keys())[0]
-                    value = data[key]
-                else:
-                    key = name
-                    value = data
-                blocks[name] = build_block(value, key)
-
-            else:
-                print(f"Формат файла {path} не поддерживается")
-
-        except Exception as e:
-            print(f"Ошибка загрузки {name} из {path}: {e}")
-
-    return blocks
-
 def load_LLM():
+    """Загружает модель LLM на основе конфигурации."""
     global llm
+    if loader.MODEL_PATH is None:
+        raise RuntimeError("MODEL_PATH не установлен. Проверь config.yaml -> paths.model")
+
     if isinstance(llm, AsyncLLM):
         del llm
-    cfg = load_yaml(MODEL_PATH)
+    cfg = loader.load_yaml(loader.MODEL_PATH)
     engine_args = AsyncEngineArgs(
         model=cfg["model"].get("name", "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
         quantization=cfg["model"].get("quantization", "awq_marlin"),
@@ -90,35 +30,35 @@ def load_LLM():
         max_model_len=cfg["model"].get("max_model_len", None),
     )
     llm = AsyncLLM.from_engine_args(engine_args)
-    
     print(f"Загружена модель")
 
+
 def build_system_prompt() -> str:
-    """
-    Склеивает все блоки данных в один system_prompt.
-    """
+    """Склеивает все блоки данных в один system_prompt."""
     global system_prompt
-    data_blocks = load_data_blocks()
+    data_blocks = loader.load_data_blocks()
     system_prompt = "\n\n".join(data_blocks.values())
     print(f"System prompt: {system_prompt}")
     return system_prompt
-    
+
+
 class ConfigWatcher(FileSystemEventHandler):
+    """Автоматическая перезагрузка конфигурации при изменении файлов."""
     def on_modified(self, event):
         path = Path(event.src_path)
-        if path.name == CONFIG_PATH.name:
-            load_paths()
-            load_sampling_params()
+        if path.name == loader.CONFIG_PATH.name:
+            loader.load_paths()
+            loader.load_sampling_params()
             load_LLM()
             build_system_prompt()
-        elif path.name == SAMPLES_PATH.name:
-            load_sampling_params()
-        elif path.name == MODEL_PATH.name:
+        elif loader.SAMPLES_PATH and path.name == loader.SAMPLES_PATH.name:
+            loader.load_sampling_params()
+        elif loader.MODEL_PATH and path.name == loader.MODEL_PATH.name:
             load_LLM()
-        elif path in DATA_PATHS.values():
+        elif path in loader.DATA_PATHS.values():
             build_system_prompt()
 
-            
+
 def generate_answer(prompt: str, sampling_params: SamplingParams, request_id: Optional[str] = None):
     if request_id is None:
         request_id = f"chat-{uuid.uuid4().hex}"
@@ -126,30 +66,31 @@ def generate_answer(prompt: str, sampling_params: SamplingParams, request_id: Op
         request_id=request_id,
         prompt=prompt,
         sampling_params=sampling_params
-    )   
+    )
 
 
 @asynccontextmanager
 async def lifespan(app):
     """Инициализация LLM при запуске приложения."""
-    load_paths()
-    load_sampling_params()
+    loader.load_paths()
+    loader.load_sampling_params()
     build_system_prompt()
     load_LLM()
-    
-    async for _ in generate_answer("Инициализация модели", SamplingParams(max_tokens=50)):
+
+    async for _ in generate_answer(system_prompt + "Инициализация модели", SamplingParams(max_tokens=50)):
         break
     print("LLM инициализирован")
-    
+
     event_handler = ConfigWatcher()
     observer = Observer()
     observer.schedule(event_handler, ".", recursive=True)
     observer.start()
 
     yield
-    
+
     observer.stop()
     observer.join()
+
 
 async def get_llm_reply(context: list, request_id: Optional[str] = None) -> AsyncGenerator[str, None]:
     """Генерация ответа LLM на основе контекста."""
@@ -165,7 +106,7 @@ async def get_llm_reply(context: list, request_id: Optional[str] = None) -> Asyn
 
     prompt = "\n".join(prompt_parts)
 
-    async for output in generate_answer(prompt, sampling_params, request_id):
+    async for output in generate_answer(prompt, loader.sampling_params, request_id):
         for completion in output.outputs:
             if completion.text:
                 yield completion.text

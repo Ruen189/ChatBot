@@ -1,11 +1,11 @@
 paths:
+  model: "configs/model.yaml"
   samples: "configs/samples.yaml"
+  system_prompt: "configs/system_prompt.txt"  
   courses: "configs/courses.yaml"
   locations: "configs/locations.yaml"
-  system_prompt: "configs/system_prompt.txt"  
-  model: "configs/model.yaml"
   teachers: "configs/teachers.yaml"
-  
+
 uvicorn:
   host: "0.0.0.0"
   port: 8000

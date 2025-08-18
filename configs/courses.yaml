@@ -1,6 +1,5 @@
 courses:
-  - id: preschool
-    title: Курсы для дошкольников
+  - title: Курсы для дошкольников
     min_age: 3
     max_age: 7
     description: >
@@ -8,8 +7,7 @@ courses:
       памяти, внимания, интеллекта.
     url: https://it-schools.org/year/course/preschool/
 
-  - id: robotics
-    title: Робототехника
+  - title: Робототехника
     min_age: 7
     max_age: 16
     description: >
@@ -18,8 +16,7 @@ courses:
       Обучение проходит 5 курсов.
     url: https://it-schools.org/year/course/robotics/
 
-  - id: informatics_basic
-    title: Информатика для школы
+  - title: Информатика для школы
     min_age: 8
     max_age: 16
     description: >
@@ -27,8 +24,7 @@ courses:
       базовое программное обеспечение, основы работы с компьютером.
     url: https://it-schools.org/year/course/informatics/
 
-  - id: theory_informatics
-    title: Теория информатики
+  - title: Теория информатики
     min_age: 10
     max_age: 16
     description: >
@@ -37,8 +33,7 @@ courses:
       первого курса Python или C++.
     url: https://it-schools.org/year/course/theory-Informatics/
 
-  - id: sport_prog
-    title: Спортивное программирование
+  - title: Спортивное программирование
     min_age: 12
     max_age: 15
     description: >
@@ -46,8 +41,7 @@ courses:
       Обучение проходит 3 курса.
     url: https://it-schools.org/year/course/sport-prog/
 
-  - id: programming_begin
-    title: Основы программирования
+  - title: Основы программирования
     min_age: 9
     max_age: 12
     description: >
@@ -55,8 +49,7 @@ courses:
       мышления. Обучение проходит 2 курса.
     url: https://it-schools.org/year/course/programming-begin/
 
-  - id: web
-    title: WEB-разработка
+  - title: WEB-разработка
     min_age: 9
     max_age: 17
     description: >
@@ -64,8 +57,7 @@ courses:
       Обучение проходит 4 курса, есть возможность закрыть экстерном.
     url: https://it-schools.org/year/course/web/
 
-  - id: graphics
-    title: Компьютерная графика
+  - title: Компьютерная графика
     min_age: 8
     max_age: 17
     description: >
@@ -73,8 +65,7 @@ courses:
       Обучение проходит 5 курсов.
     url: https://it-schools.org/year/course/graphics/
 
-  - id: programming_python
-    title: Программирование Python
+  - title: Программирование Python
     min_age: 9
     max_age: 18
     description: >
@@ -82,8 +73,7 @@ courses:
       и работы с базами данных. Обучение проходит 4 курса.
     url: https://it-schools.org/year/course/programming-python/
 
-  - id: programming_cpp
-    title: Программирование C++
+  - title: Программирование C++
     min_age: 10
     max_age: 18
     description: >
@@ -91,8 +81,7 @@ courses:
       мессенджеров и онлайн-игр. Обучение проходит 4 курса.
     url: https://it-schools.org/year/course/programming-cpp/
 
-  - id: neuron
-    title: Нейронные сети
+  - title: Нейронные сети
     min_age: 14
     max_age: 18
     description: >
@@ -100,8 +89,7 @@ courses:
       Обучение проходит 2 курса.
     url: https://it-schools.org/year/course/neuron/
 
-  - id: programming_processing
-    title: Программирование Processing
+  - title: Программирование Processing
     min_age: 12
     max_age: 18
     description: >
@@ -109,16 +97,14 @@ courses:
       создание с помощью него собственной игры.
     url: https://it-schools.org/year/course/programming-processing/
 
-  - id: exam
-    title: Подготовка к экзаменам
+  - title: Подготовка к экзаменам
     min_age: 15
     max_age: 18
     description: >
       Подготовка к ОГЭ (9 класс) и ЕГЭ (10–11 классы) по информатике.
     url: https://it-schools.org/year/course/exam/
 
-  - id: programming_technology
-    title: Технология программирования
+  - title: Технология программирования
     min_age: 13
     max_age: 18
     description: >
