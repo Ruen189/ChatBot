@@ -1,6 +1,6 @@
 model:
   name: "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"
   quantization: "awq_marlin"
-  gpu_memory_utilization: 0.75
+  gpu_memory_utilization: 0.7
   dtype: "auto"
-  max_model_len: 5500
+  max_model_len: 5000

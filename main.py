@@ -10,7 +10,6 @@ from python.models import GenerateRequest
 from python.loader import config, verify_api_key
 from python.llm_service import lifespan, get_llm_reply
 
-
 app = FastAPI(lifespan=lifespan)
 
 allow_origins = config.get("cors", {}).get("allow_origins", [])

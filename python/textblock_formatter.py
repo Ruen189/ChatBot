@@ -1,32 +1,33 @@
-def build_courses_block(courses_data: dict) -> str:
-    """Формирование текстового блока с курсами."""
-    courses = courses_data.get("courses", [])
-    if not courses:
-        return "Информация про курсы в Real-IT отсутствует."
+from typing import Union
 
-    return "Блок курсы Real-IT:\n" + "\n".join(
-        f"Название:{c.get('title', 'Без названия')}."
-        f"Рекомендуемый возраст:(от {c.get('min_age', '?')} до {c.get('max_age', '?')} лет)."
-        f"Описание: {c.get('description', '')} Ссылка на курс:({c.get('url', '')})."
-        for c in courses
-    ) + "\nКонец блока про курсы Real-IT"
+def build_block(data: Union[dict, list], block_name: str) -> str:
+    """
+    Полностью универсальный формовщик блоков для Real-IT.
+    Пользователю не нужно писать кастомные форматтеры.
+    
+    :param data: список или словарь с данными
+    :param block_name: имя блока (например, "курсы", "филиалы", "преподаватели")
+    """
+    if not data:
+        return f"Информация про {block_name} Real-IT отсутствует."
 
-def build_locations_block(locations: dict) -> str:
-    """Формирование текстового блока с филиалами по всем городам."""
-    if not locations:
-        return "Информация про филиалы Real-IT отсутствует."
+    def auto_formatter(item: dict) -> str:
+        return "; ".join(f"{k}: {v}" for k, v in item.items())
 
-    blocks = []
-    for city, city_locations in locations.items():
-        if not city_locations:
-            blocks.append(f"Информация про филиалы Real-IT в городе {city} отсутствует.")
-            continue
+    if isinstance(data, dict):
+        blocks = []
+        for key, items in data.items():
+            if not items:
+                blocks.append(f"Информация про {block_name} в разделе {key} отсутствует.")
+                continue
+            block_text = f"Блок про {block_name} ({key}):\n" + "\n".join(auto_formatter(item) for item in items)
+            block_text += f"\nКонец блока {block_name} ({key})"
+            blocks.append(block_text)
+        return "\n".join(blocks)
 
-        city_block = f"Блок про филиалы в городе {city}:\n" + "\n".join(
-            f"Название филиала:{l.get('title', 'Без названия')}, Улица:{l.get('street', '')}."
-            f"Как пройти:{l.get('entrance', '')}."
-            for l in city_locations
-        ) + f"\nКонец блока {city}"
-        blocks.append(city_block)
+    elif isinstance(data, list):
+        block_text = f"Блок про {block_name} Real-IT:\n" + "\n".join(auto_formatter(item) for item in data)
+        block_text += f"\nКонец блока про {block_name} Real-IT"
+        return block_text
 
-    return "\n".join(blocks)
+    return f"Неверный формат данных для {block_name}."

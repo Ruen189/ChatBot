@@ -1,3 +1,4 @@
+"""Модуль для определения моделей данных, используемых в приложении."""
 from typing import List, Literal
 from pydantic import BaseModel, Field
 
