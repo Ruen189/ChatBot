@@ -2,9 +2,7 @@ from typing import Union
 
 def build_block(data: Union[dict, list], block_name: str) -> str:
     """
-    Полностью универсальный формовщик блоков для Real-IT.
     Пользователю не нужно писать кастомные форматтеры.
-    
     :param data: список или словарь с данными
     :param block_name: имя блока (например, "курсы", "филиалы", "преподаватели")
     """

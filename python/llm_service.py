@@ -1,4 +1,7 @@
 """Модуль для работы с LLM-сервисом: инициализация, генерация ответов и мониторинг конфигов."""
+import uuid
+import asyncio
+import traceback
 from contextlib import asynccontextmanager
 from typing import Optional, AsyncGenerator
 from vllm import SamplingParams
@@ -8,7 +11,6 @@ import python.loader as loader
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import uuid
 
 llm: Optional[AsyncLLM] = None
 system_prompt: str = ""
@@ -21,6 +23,7 @@ def load_LLM():
 
     if isinstance(llm, AsyncLLM):
         del llm
+        
     cfg = loader.load_yaml(loader.MODEL_PATH)
     engine_args = AsyncEngineArgs(
         model=cfg["model"].get("name", "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
@@ -29,37 +32,43 @@ def load_LLM():
         dtype=cfg["model"].get("dtype", "auto"),
         max_model_len=cfg["model"].get("max_model_len", None),
     )
+    
     llm = AsyncLLM.from_engine_args(engine_args)
     print(f"Загружена модель")
 
 
 def build_system_prompt() -> str:
-    """Склеивает все блоки данных в один system_prompt."""
+    """Собирает все блоки данных в один system_prompt."""
     global system_prompt
     data_blocks = loader.load_data_blocks()
     system_prompt = "\n\n".join(data_blocks.values())
-    print(f"System prompt: {system_prompt}")
+    print(f"System prompt сформирован, длина: {len(system_prompt)} символов")
     return system_prompt
 
 
 class ConfigWatcher(FileSystemEventHandler):
     """Автоматическая перезагрузка конфигурации при изменении файлов."""
     def on_modified(self, event):
-        path = Path(event.src_path)
-        if path.name == loader.CONFIG_PATH.name:
-            loader.load_paths()
-            loader.load_sampling_params()
-            load_LLM()
-            build_system_prompt()
-        elif loader.SAMPLES_PATH and path.name == loader.SAMPLES_PATH.name:
-            loader.load_sampling_params()
-        elif loader.MODEL_PATH and path.name == loader.MODEL_PATH.name:
-            load_LLM()
-        elif path in loader.DATA_PATHS.values():
-            build_system_prompt()
-
+        try:
+            path = Path(event.src_path)
+            if path.name == loader.CONFIG_PATH.name:
+                loader.load_paths()
+                loader.load_sampling_params()
+                load_LLM()
+                build_system_prompt()
+            elif loader.SAMPLES_PATH and path.name == loader.SAMPLES_PATH.name:
+                loader.load_sampling_params()
+            elif loader.MODEL_PATH and path.name == loader.MODEL_PATH.name:
+                load_LLM()
+            elif path in loader.DATA_PATHS.values():
+                build_system_prompt()
+        except Exception as e:
+            print("Ошибка в ConfigWatcher:")
+            traceback.print_exc()
 
 def generate_answer(prompt: str, sampling_params: SamplingParams, request_id: Optional[str] = None):
+    if llm is None:
+        raise RuntimeError("LLM не загружена. Проверь конфиг.")
     if request_id is None:
         request_id = f"chat-{uuid.uuid4().hex}"
     return llm.generate(
@@ -68,19 +77,32 @@ def generate_answer(prompt: str, sampling_params: SamplingParams, request_id: Op
         sampling_params=sampling_params
     )
 
+async def warmup_llm():
+    """Функция для прогрева LLM, чтобы избежать задержек при первом запросе."""
+    if llm is None:
+        raise RuntimeError("LLM не загружена. Проверь конфиг.")
+    try:
+        async for _ in generate_answer(system_prompt + "Инициализация модели", SamplingParams(max_tokens=50)):
+            pass
+    except Exception as e:
+        print(f"Ошибка при прогреве LLM: {e}")
+        traceback.print_exc()
 
 @asynccontextmanager
 async def lifespan(app):
     """Инициализация LLM при запуске приложения."""
-    loader.load_paths()
-    loader.load_sampling_params()
-    build_system_prompt()
-    load_LLM()
+    try:
+        loader.load_paths()
+        loader.load_sampling_params()
+        build_system_prompt()
+        load_LLM()
 
-    async for _ in generate_answer(system_prompt + "Инициализация модели", SamplingParams(max_tokens=50)):
-        break
-    print("LLM инициализирован")
-
+        await warmup_llm()
+        print("LLM инициализирован")
+    except Exception as e:
+        print("Ошибка при инициализации LLM:")
+        traceback.print_exc()
+        
     event_handler = ConfigWatcher()
     observer = Observer()
     observer.schedule(event_handler, ".", recursive=True)
@@ -105,7 +127,6 @@ async def get_llm_reply(context: list, request_id: Optional[str] = None) -> Asyn
     prompt_parts.append("Бот:")
 
     prompt = "\n".join(prompt_parts)
-
     async for output in generate_answer(prompt, loader.sampling_params, request_id):
         for completion in output.outputs:
             if completion.text:

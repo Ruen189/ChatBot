@@ -1,113 +1,127 @@
-courses:
-  - title: Курсы для дошкольников
-    min_age: 3
-    max_age: 7
-    description: >
+курсы:
+  - название: Курсы для дошкольников
+    направление: дошкольное
+    мин_возраст: 3
+    макс_возраст: 7
+    описание: >
       Занятия направлены на формирование познавательного интереса,
       памяти, внимания, интеллекта.
-    url: https://it-schools.org/year/course/preschool/
+    ссылка: https://it-schools.org/year/course/preschool/
 
-  - title: Робототехника
-    min_age: 7
-    max_age: 16
-    description: >
+  - название: Робототехника
+    направление: Робототехника
+    мин_возраст: 7
+    макс_возраст: 16
+    описание: >
       На уроках робототехники в нашей школе дети осваивают базовую механику,
       основы электроники и программирования микропроцессоров.
       Обучение проходит 5 курсов.
-    url: https://it-schools.org/year/course/robotics/
+    ссылка: https://it-schools.org/year/course/robotics/
 
-  - title: Информатика для школы
-    min_age: 8
-    max_age: 16
-    description: >
+  - название: Информатика для школы
+    направление: Информатика
+    мин_возраст: 8
+    макс_возраст: 16
+    описание: >
       На этом курсе обучающиеся изучают устройство компьютера,
       базовое программное обеспечение, основы работы с компьютером.
-    url: https://it-schools.org/year/course/informatics/
+    ссылка: https://it-schools.org/year/course/informatics/
 
-  - title: Теория информатики
-    min_age: 10
-    max_age: 16
-    description: >
+  - название: Теория информатики
+    направление: Информатика
+    мин_возраст: 10
+    макс_возраст: 16
+    описание: >
       Изучение теории по дисциплине «Информатика» и решение большого
       количества задач. Запись возможна только после прохождения
       первого курса Python или C++.
-    url: https://it-schools.org/year/course/theory-Informatics/
+    ссылка: https://it-schools.org/year/course/theory-Informatics/
 
-  - title: Спортивное программирование
-    min_age: 12
-    max_age: 15
-    description: >
+  - название: Спортивное программирование
+    направление: программирование
+    мин_возраст: 12
+    макс_возраст: 15
+    описание: >
       Основы программирования через соревновательную деятельность.
       Обучение проходит 3 курса.
-    url: https://it-schools.org/year/course/sport-prog/
+    ссылка: https://it-schools.org/year/course/sport-prog/
 
-  - title: Основы программирования
-    min_age: 9
-    max_age: 12
-    description: >
+  - название: Основы программирования
+    направление: программирование
+    мин_возраст: 9
+    макс_возраст: 12
+    описание: >
       Изучение базовых принципов алгоритмизации и развитие логического
       мышления. Обучение проходит 2 курса.
-    url: https://it-schools.org/year/course/programming-begin/
+    ссылка: https://it-schools.org/year/course/programming-begin/
 
-  - title: WEB-разработка
-    min_age: 9
-    max_age: 17
-    description: >
+  - название: WEB-разработка
+    направление: Web
+    мин_возраст: 9
+    макс_возраст: 17
+    описание: >
       Изучение вёрстки сайтов и сопутствующих технологий.
       Обучение проходит 4 курса, есть возможность закрыть экстерном.
-    url: https://it-schools.org/year/course/web/
+    ссылка: https://it-schools.org/year/course/web/
 
-  - title: Компьютерная графика
-    min_age: 8
-    max_age: 17
-    description: >
+  - название: Компьютерная графика
+    направление: Дизайн
+    мин_возраст: 8
+    макс_возраст: 17
+    описание: >
       Работа с разными типами графики: векторная, растровая и трёхмерная.
       Обучение проходит 5 курсов.
-    url: https://it-schools.org/year/course/graphics/
+    ссылка: https://it-schools.org/year/course/graphics/
 
-  - title: Программирование Python
-    min_age: 9
-    max_age: 18
-    description: >
+  - название: Программирование Python
+    направление: программирование
+    мин_возраст: 9
+    макс_возраст: 18
+    описание: >
       Изучение языка Python: от лёгких приложений до ООП
       и работы с базами данных. Обучение проходит 4 курса.
-    url: https://it-schools.org/year/course/programming-python/
+    ссылка: https://it-schools.org/year/course/programming-python/
 
-  - title: Программирование C++
-    min_age: 10
-    max_age: 18
-    description: >
+  - название: Программирование C++
+    направление: программирование
+    мин_возраст: 10
+    макс_возраст: 18
+    описание: >
       Изучение языка C++: от простых приложений до создания
       мессенджеров и онлайн-игр. Обучение проходит 4 курса.
-    url: https://it-schools.org/year/course/programming-cpp/
+    ссылка: https://it-schools.org/year/course/programming-cpp/
 
-  - title: Нейронные сети
-    min_age: 14
-    max_age: 18
-    description: >
+  - название: Нейронные сети
+    направление: программирование
+    мин_возраст: 14
+    макс_возраст: 18
+    описание: >
       Изучение основ нейронных сетей и их применения.
       Обучение проходит 2 курса.
-    url: https://it-schools.org/year/course/neuron/
+    ссылка: https://it-schools.org/year/course/neuron/
 
-  - title: Программирование Processing
-    min_age: 12
-    max_age: 18
-    description: >
+  - название: Программирование Processing
+    направление: программирование
+    мин_возраст: 12
+    макс_возраст: 18
+    описание: >
       Изучение основ инструмента processing,
       создание с помощью него собственной игры.
-    url: https://it-schools.org/year/course/programming-processing/
+    ссылка: https://it-schools.org/year/course/programming-processing/
 
-  - title: Подготовка к экзаменам
-    min_age: 15
-    max_age: 18
-    description: >
+  - название: Подготовка к экзаменам
+    направление: Экзамены
+    мин_возраст: 15
+    макс_возраст: 18
+    описание: >
       Подготовка к ОГЭ (9 класс) и ЕГЭ (10–11 классы) по информатике.
-    url: https://it-schools.org/year/course/exam/
+    ссылка: https://it-schools.org/year/course/exam/
 
-  - title: Технология программирования
-    min_age: 13
-    max_age: 18
-    description: >
+  - название: Технология программирования
+    направление: программирование
+    мин_возраст: 13
+    макс_возраст: 18
+    описание: >
       Изучение классических алгоритмов и методов решения задач.
       Обучение проходит 2 курса.
-    url: https://it-schools.org/year/course/programming-technology/
+    ссылка: https://it-schools.org/year/course/programming-technology/
