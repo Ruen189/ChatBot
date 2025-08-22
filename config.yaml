@@ -5,7 +5,8 @@ paths:
   courses: "configs/courses.yaml"
   locations: "configs/locations.yaml"
   teachers: "configs/teachers.yaml"
-
+  examples: "configs/examples.yaml"
+  
 uvicorn:
   host: "0.0.0.0"
   port: 8000

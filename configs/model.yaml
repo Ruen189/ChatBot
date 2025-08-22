@@ -2,5 +2,5 @@ model:
   name: "TheBloke/saiga_mistral_7b-AWQ"
   quantization: "awq_marlin"
   gpu_memory_utilization: 0.75
-  dtype: "auto"
-  max_model_len: 6000
+  dtype: "float16"
+  #max_model_len: 6000
