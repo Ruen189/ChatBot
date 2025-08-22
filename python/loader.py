@@ -45,7 +45,6 @@ def load_paths():
 def load_sampling_params():
     """Загружает параметры семплинга из файла samples."""
     global sampling_params
-    from python.loader import SAMPLES_PATH, load_yaml  # чтобы не было циклического импорта
     cfg = load_yaml(SAMPLES_PATH)
     sampling_params = SamplingParams(
         temperature=cfg["sampling"].get("temperature", 0.3),

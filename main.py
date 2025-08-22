@@ -10,7 +10,6 @@ from python.models import GenerateRequest
 from python.loader import config, verify_api_key
 from python.llm_service import lifespan, get_llm_reply
 
-# Настройка логирования
 logging.basicConfig(
     filename="requests.log",
     level=logging.INFO,
@@ -40,12 +39,11 @@ async def generate(req: GenerateRequest, request: Request, x_api_key: str = Head
     request_id = f"req-{uuid.uuid4().hex}"
     client_ip = request.client.host if request.client else "unknown"
 
-    # Берем последнее сообщение пользователя
     last_user_message = next((msg.content for msg in reversed(req.context) if msg.role == "user"), "")
 
     async def stream():
         previous_text = ""
-        full_response = ""  # собираем весь ответ
+        full_response = ""
 
         async for chunk in get_llm_reply(req.context, request_id=request_id):
             cleaned_chunk = re.sub(r'[ \t]+', ' ', chunk.strip())
@@ -61,7 +59,6 @@ async def generate(req: GenerateRequest, request: Request, x_api_key: str = Head
                 full_response += new_part
                 yield json.dumps({"text": new_part}, ensure_ascii=False) + "\n"
 
-        # Логируем IP, последнее сообщение пользователя и полный ответ бота в читаемом формате
         logger.info(
             f"IP: {client_ip} | UserMessage: {last_user_message} | BotResponse: {full_response}"
         )
