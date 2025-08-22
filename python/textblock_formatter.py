@@ -19,13 +19,11 @@ def build_block(data: Union[dict, list], block_name: str) -> str:
                 blocks.append(f"Информация про {block_name} в разделе {key} отсутствует.")
                 continue
             block_text = f"Блок про {block_name} ({key}):\n" + "\n".join(auto_formatter(item) for item in items)
-            block_text += f"\nКонец блока {block_name} ({key})"
             blocks.append(block_text)
         return "\n".join(blocks)
 
     elif isinstance(data, list):
-        block_text = f"Блок про {block_name} Real-IT:\n" + "\n".join(auto_formatter(item) for item in data)
-        block_text += f"\nКонец блока про {block_name} Real-IT"
+        block_text = f"{block_name}:\n" + "\n".join(auto_formatter(item) for item in data)
         return block_text
 
     return f"Неверный формат данных для {block_name}."

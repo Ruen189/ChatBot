@@ -1,6 +1,6 @@
 .venv
 .idea
 __pycache__
-app.log
+requests.log
 about_realit.txt
 about_realit copy.txt

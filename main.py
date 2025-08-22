@@ -1,14 +1,23 @@
-"""Модуль запуска"""
 import re
 import json
 import uuid
+import logging
 import uvicorn
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Header, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from python.models import GenerateRequest
 from python.loader import config, verify_api_key
 from python.llm_service import lifespan, get_llm_reply
+
+# Настройка логирования
+logging.basicConfig(
+    filename="requests.log",
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    encoding="utf-8"
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(lifespan=lifespan)
 
@@ -25,13 +34,19 @@ app.add_middleware(
 )
 
 @app.post("/generate")
-async def generate(req: GenerateRequest, x_api_key: str = Header(None)):
+async def generate(req: GenerateRequest, request: Request, x_api_key: str = Header(None)):
     await verify_api_key(x_api_key)
     
     request_id = f"req-{uuid.uuid4().hex}"
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Берем последнее сообщение пользователя
+    last_user_message = next((msg.content for msg in reversed(req.context) if msg.role == "user"), "")
 
     async def stream():
         previous_text = ""
+        full_response = ""  # собираем весь ответ
+
         async for chunk in get_llm_reply(req.context, request_id=request_id):
             cleaned_chunk = re.sub(r'[ \t]+', ' ', chunk.strip())
 
@@ -43,12 +58,16 @@ async def generate(req: GenerateRequest, x_api_key: str = Header(None)):
             previous_text = cleaned_chunk
 
             if new_part:
+                full_response += new_part
                 yield json.dumps({"text": new_part}, ensure_ascii=False) + "\n"
 
+        # Логируем IP, последнее сообщение пользователя и полный ответ бота в читаемом формате
+        logger.info(
+            f"IP: {client_ip} | UserMessage: {last_user_message} | BotResponse: {full_response}"
+        )
         yield json.dumps({"done": True}, ensure_ascii=False) + "\n"
-    response = StreamingResponse(stream(), media_type="application/json")
 
-    return response
+    return StreamingResponse(stream(), media_type="application/json")
 
 
 if __name__ == "__main__":
