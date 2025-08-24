@@ -54,42 +54,39 @@ def load_sampling_params():
     )
     print(f"Загружены параметры сэмплинга")
 
-
 def load_data_blocks() -> Dict[str, str]:
-    """
-    Загружает все файлы из config["paths"] (кроме samples и model).
-    При этом system_prompt всегда добавляется первым.
-    """
     blocks = {}
-
-    if "system_prompt" in config["paths"]:
-        path = Path(config["paths"]["system_prompt"])
-        try:
-            if path.suffix == ".txt":
-                blocks["system_prompt"] = load_txt(path)
-            elif path.suffix in (".yaml", ".yml"):
-                data = load_yaml(path)
-                key = "system_prompt"
-                blocks["system_prompt"] = build_block(data, key)
-        except Exception as e:
-            print(f"Ошибка загрузки system_prompt из {path}: {e}")
-
     for name, path in DATA_PATHS.items():
-        if name == "system_prompt":
-            continue
         try:
             if path.suffix == ".txt":
                 blocks[name] = load_txt(path)
 
             elif path.suffix in (".yaml", ".yml"):
-                data = load_yaml(path)
-                if isinstance(data, dict) and len(data) == 1:
-                    key = list(data.keys())[0]
-                    value = data[key]
+                raw = load_txt(path)
+                data = yaml.safe_load(raw)
+
+                if isinstance(data, dict) and len(data.keys()) == len(set(data.keys())):
+                    for k, v in data.items():
+                        blocks[f"{name}_{k}"] = build_block(v, k)
+
+                elif isinstance(data, dict):
+                    root = yaml.compose(raw)
+                    items = []
+                    for node in root.value:
+                        k = node[0].value
+                        v = yaml.constructor.SafeConstructor.construct_object(yaml.SafeLoader, node[1])
+                        items.append((k, v))
+
+                    for idx, (k, v) in enumerate(items, start=1):
+                        blocks[f"{name}_{k}_{idx}"] = build_block(v, k)
+
+                elif isinstance(data, list):
+                    for idx, item in enumerate(data, start=1):
+                        key = f"{name}_dialog_{idx}"
+                        blocks[key] = build_block(item, f"dialog_{idx}")
+
                 else:
-                    key = name
-                    value = data
-                blocks[name] = build_block(value, key)
+                    blocks[name] = str(data)
 
             else:
                 print(f"Формат файла {path} не поддерживается")

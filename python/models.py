@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 class Message(BaseModel):
     """Сообщение в диалоге."""
     role: Literal["user", "bot"]
-    content: str = Field(..., min_length=1)
+    content: str = Field(min_length=1)
 
 
 class GenerateRequest(BaseModel):

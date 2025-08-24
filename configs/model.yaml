@@ -3,4 +3,4 @@ model:
   quantization: "awq_marlin"
   gpu_memory_utilization: 0.75
   dtype: "float16"
-  #max_model_len: 6000
+  max_model_len: 7000

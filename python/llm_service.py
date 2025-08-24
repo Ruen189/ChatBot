@@ -25,12 +25,9 @@ def load_LLM():
         raise RuntimeError("MODEL_PATH не установлен. Проверь config.yaml -> paths.model")
 
     cfg = loader.load_yaml(loader.MODEL_PATH)
-    model_name = cfg["model"].get(
-        "name", "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"
-    )
 
     engine_args = AsyncEngineArgs(
-        model=model_name,
+        model=cfg["model"].get("name", "PrunaAI/IlyaGusev-saiga_mistral_7b_merged-AWQ-4bit-smashed"),
         quantization=cfg["model"].get("quantization", "awq_marlin"),
         gpu_memory_utilization=cfg["model"].get("gpu_memory_utilization", 0.6),
         dtype=cfg["model"].get("dtype", "auto"),
@@ -38,7 +35,7 @@ def load_LLM():
     )
 
     llm = AsyncLLM.from_engine_args(engine_args)
-    print(f"Загружена модель: {model_name}")
+    print(f"Загружена модель: {engine_args.model}")
 
 
 def build_system_prompt() -> str:
