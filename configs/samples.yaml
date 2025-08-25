@@ -1,5 +1,5 @@
 sampling:
-  temperature: 0.8
-  top_p: 0.8
+  temperature: 0.9
+  top_p: 0.95
   max_tokens: 400
   stop: ["пользователь:", "бот:", "bot:", "Пользователь:", "Бот:", "Bot:"]
